@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Filmes - MagiaTV</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen p-8 font-sans">
+
+    <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 h-fit">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                <i class="fas fa-film mr-2 text-purple-600"></i> Novo Filme
+            </h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Filme</label>
+                    <input type="text" id="titulo" class="w-full border p-2 rounded focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Ex: Vingadores">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                    <input type="text" id="categoria" class="w-full border p-2 rounded focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Ex: Ação / Aventura">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Link da Capa (Imagem)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="imagem" class="w-full border p-2 rounded focus:ring-2 focus:ring-purple-500 outline-none" placeholder="https://...">
+                        <button onclick="previewImage()" class="bg-gray-200 px-3 rounded hover:bg-gray-300" title="Ver imagem"><i class="fas fa-eye"></i></button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Dica: Pegue no site <b>themoviedb.org</b></p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Link do Trailer (YouTube)</label>
+                    <input type="text" id="trailer" class="w-full border p-2 rounded focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Cole o link completo aqui">
+                </div>
+
+                <button onclick="adicionarFilme()" class="w-full bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 transition transform active:scale-95">
+                    Adicionar à Lista
+                </button>
+            </div>
+        </div>
+
+        <div class="flex flex-col h-full">
+            <div class="bg-gray-800 rounded-xl shadow-lg p-6 text-white flex-grow flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-green-400">Código Pronto</h2>
+                    <button onclick="copiarCodigo()" class="text-sm bg-white text-gray-800 px-3 py-1 rounded hover:bg-gray-200 transition">
+                        <i class="fas fa-copy mr-1"></i> Copiar Tudo
+                    </button>
+                </div>
+                
+                <p class="text-sm text-gray-400 mb-2">Adicione quantos filmes quiser. Quando terminar, copie o código abaixo e substitua no arquivo <b>js/main.js</b>.</p>
+                
+                <textarea id="saida" class="w-full flex-grow bg-gray-900 text-green-400 font-mono text-xs p-4 rounded border border-gray-700 outline-none resize-none h-64" readonly></textarea>
+                
+                <button onclick="limparLista()" class="mt-4 text-red-400 text-sm hover:text-red-300 underline self-end">
+                    Limpar tudo e começar do zero
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let listaFilmes = [];
+
+        function adicionarFilme() {
+            const titulo = document.getElementById('titulo').value;
+            const categoria = document.getElementById('categoria').value;
+            const imagem = document.getElementById('imagem').value;
+            let trailerUrl = document.getElementById('trailer').value;
+
+            if (!titulo || !imagem || !trailerUrl) {
+                alert('Preencha pelo menos Nome, Imagem e Trailer!');
+                return;
+            }
+
+            // Extrair ID do Youtube (mágica para facilitar sua vida)
+            let trailerId = '';
+            try {
+                if (trailerUrl.includes('v=')) {
+                    trailerId = trailerUrl.split('v=')[1].split('&')[0];
+                } else if (trailerUrl.includes('youtu.be/')) {
+                    trailerId = trailerUrl.split('youtu.be/')[1];
+                } else {
+                    trailerId = trailerUrl; // Caso já tenha colado só o ID
+                }
+            } catch (e) {
+                alert('Link do YouTube inválido!');
+                return;
+            }
+
+            // Adiciona na lista
+            listaFilmes.push({
+                title: titulo,
+                category: categoria,
+                image: imagem,
+                trailerId: trailerId
+            });
+
+            atualizarCodigo();
+            
+            // Limpa campos para o próximo
+            document.getElementById('titulo').value = '';
+            document.getElementById('categoria').value = '';
+            document.getElementById('imagem').value = '';
+            document.getElementById('trailer').value = '';
+            document.getElementById('titulo').focus();
+        }
+
+        function atualizarCodigo() {
+            const jsonString = JSON.stringify(listaFilmes, null, 4);
+            // Formata para parecer código JavaScript bonito
+            const codigoJS = `const MOVIE_HIGHLIGHTS = ${jsonString};`;
+            document.getElementById('saida').value = codigoJS;
+        }
+
+        function copiarCodigo() {
+            const texto = document.getElementById('saida');
+            texto.select();
+            document.execCommand('copy');
+            alert('Código copiado! Agora cole no arquivo js/main.js');
+        }
+
+        function limparLista() {
+            if(confirm('Apagar a lista atual?')) {
+                listaFilmes = [];
+                document.getElementById('saida').value = '';
+            }
+        }
+        
+        function previewImage() {
+            const url = document.getElementById('imagem').value;
+            if(url) window.open(url, '_blank');
+        }
+    </script>
+</body>
+</html>
