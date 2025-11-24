@@ -4,28 +4,28 @@
 
 const MOVIE_HIGHLIGHTS = [
     {
-        "title": "Deadpool & Wolverine",
-        "category": "Ação / Comédia",
-        "image": "https://image.tmdb.org/t/p/w500/8cdWjvZonExuu9eFtt42o1UCrwm.jpg",
-        "trailerId": "73_1biulkYk"
+        "title": "Plano em Família 2 (2025)",
+        "category": "Ação, Comédia",
+        "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/aLgvLNWETZ2wtPzU3E7lavEpCJw.jpg",
+        "trailerId": "64-0cFnQ6Ls"
     },
     {
-        "title": "Divertida Mente 2",
-        "category": "Animação",
-        "image": "https://image.tmdb.org/t/p/w500/z1p34vh7dEOnLDmyCrlUVLuoDzd.jpg",
-        "trailerId": "y10kM7v7dM4"
+        "title": "Zootopia 2 (2025)",
+        "category": "Animação, Família, Comédia, Aventura, Mistério",
+        "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/fthvYnjERbXt3ILjLjHpPNd5IVJ.jpg",
+        "trailerId": "z-C1VtXQr6o"
     },
     {
-        "title": "Planeta dos Macacos",
-        "category": "Ficção Científica",
-        "image": "https://image.tmdb.org/t/p/w500/gKkl37BQuKTanygYQG1pyYgLVgf.jpg",
-        "trailerId": "w2lIEpWwR6I"
+        "title": "IT: Bem-Vindos a Derry (2025)",
+        "category": "Drama, Mistério",
+        "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/gMTfrLvrDaD0zrhpLZ7zXIIpKfJ.jpg",
+        "trailerId": "_t4_QgZoyn8"
     },
     {
-        "title": "Bad Boys 4",
-        "category": "Ação / Policial",
-        "image": "https://image.tmdb.org/t/p/w500/3w84hCFJATpiCO5g8hpdqVPB2q.jpg",
-        "trailerId": "SjRj3i3-TBA"
+        "title": "Frankenstein (2025)",
+        "category": "Drama, Terror, Fantasia",
+        "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/cXsMxClCcAF1oMwoXZvbKwWoNeS.jpg",
+        "trailerId": "gRvl9uxmcbA"
     }
 ];
 
