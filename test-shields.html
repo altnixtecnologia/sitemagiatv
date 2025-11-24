@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Escudos dos Times - MagiaTV</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .shield-container {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .shield-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .shield-text {
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800">
+            🧪 Teste de Escudos dos Times
+        </h1>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">Status dos Escudos</h2>
+            <div id="debug-info" class="text-sm text-gray-600 mb-4"></div>
+            
+            <div id="shields-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 justify-items-center">
+                <!-- Escudos serão adicionados aqui -->
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">Instruções</h2>
+            <ul class="text-sm text-gray-600 space-y-2">
+                <li>✅ Escudos com borda branca: carregaram corretamente</li>
+                <li>❌ Escudos sem borda: erro no carregamento</li>
+                <li>📏 O texto deve estar centralizado dentro do círculo</li>
+                <li>🎯 O tamanho do círculo é 80x80px (aumentado para melhor visualização)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script>
+        // Função para testar escudos
+        function testTeamShields() {
+            const container = document.getElementById('shields-container');
+            const debugInfo = document.getElementById('debug-info');
+            const teams = Object.keys(TEAM_SHIELDS);
+            let loadedCount = 0;
+            let errorCount = 0;
+            
+            debugInfo.innerHTML = `Testando ${teams.length} escudos...`;
+            
+            teams.forEach(teamName => {
+                const shieldData = getTeamShield(teamName);
+                
+                // Criar container do escudo
+                const shieldWrapper = document.createElement('div');
+                shieldWrapper.className = 'relative flex flex-col items-center';
+                
+                // Criar container circular
+                const shieldContainer = document.createElement('div');
+                shieldContainer.className = 'shield-container';
+                
+                // Definir gradiente baseado nas cores do time
+                const gradientColors = shieldData.colors.split(' ');
+                const startColor = gradientColors[1]; // from-green-600
+                const endColor = gradientColors[3]; // to-white
+                
+                shieldContainer.style.setProperty('--gradient-start', getColorValue(startColor));
+                shieldContainer.style.setProperty('--gradient-end', getColorValue(endColor));
+                
+                // Criar imagem do escudo
+                const img = document.createElement('img');
+                img.src = shieldData.url;
+                img.alt = `Escudo ${teamName}`;
+                img.className = 'shield-img';
+                
+                // Eventos de carregamento
+                img.onload = function() {
+                    loadedCount++;
+                    shieldContainer.style.border = '3px solid #10b981'; // Verde para sucesso
+                    updateDebugInfo();
+                };
+                
+                img.onerror = function() {
+                    errorCount++;
+                    shieldContainer.style.border = '3px solid #ef4444'; // Vermelho para erro
+                    updateDebugInfo();
+                };
+                
+                // Adicionar texto do time
+                const textElement = document.createElement('div');
+                textElement.className = 'shield-text';
+                textElement.textContent = shieldData.text;
+                
+                // Montar estrutura
+                shieldContainer.appendChild(img);
+                shieldWrapper.appendChild(shieldContainer);
+                shieldWrapper.appendChild(textElement);
+                container.appendChild(shieldWrapper);
+            });
+            
+            function updateDebugInfo() {
+                const total = teams.length;
+                debugInfo.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span>Total de escudos: ${total}</span>
+                        <span class="text-green-600">✅ Carregados: ${loadedCount}</span>
+                        <span class="text-red-600">❌ Erros: ${errorCount}</span>
+                    </div>
+                    <div class="mt-2">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-600 h-2 rounded-full transition-all duration-300" 
+                                 style="width: ${(loadedCount / total) * 100}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Função auxiliar para converter classes Tailwind para valores de cor
+            function getColorValue(tailwindClass) {
+                const colorMap = {
+                    'from-green-600': '#16a34a',
+                    'to-white': '#ffffff',
+                    'from-white': '#ffffff',
+                    'to-black': '#000000',
+                    'from-red-600': '#dc2626',
+                    'from-black': '#000000',
+                    'to-green-600': '#16a34a',
+                    'from-red-600': '#dc2626'
+                };
+                return colorMap[tailwindClass] || '#6b7280';
+            }
+        }
+        
+        // Executar teste quando a página carregar
+        document.addEventListener('DOMContentLoaded', testTeamShields);
+    </script>
+</body>
+</html>
