@@ -1,7 +1,6 @@
 // ==========================================
-// 1. ÁREA DOS FILMES (COLE O CÓDIGO DO PAINEL AQUI)
+// 1. ÁREA DOS FILMES EM ALTA
 // ==========================================
-
 const MOVIE_HIGHLIGHTS = [
     {
         "title": "Plano em Família 2 (2025)",
@@ -11,7 +10,7 @@ const MOVIE_HIGHLIGHTS = [
     },
     {
         "title": "Zootopia 2 (2025)",
-        "category": "Animação, Família, Comédia, Aventura, Mistério",
+        "category": "Animação, Família",
         "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/fthvYnjERbXt3ILjLjHpPNd5IVJ.jpg",
         "trailerId": "z-C1VtXQr6o"
     },
@@ -23,7 +22,7 @@ const MOVIE_HIGHLIGHTS = [
     },
     {
         "title": "Frankenstein (2025)",
-        "category": "Drama, Terror, Fantasia",
+        "category": "Drama, Terror",
         "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/cXsMxClCcAF1oMwoXZvbKwWoNeS.jpg",
         "trailerId": "gRvl9uxmcbA"
     }
@@ -39,10 +38,8 @@ const API_CONFIG = {
 };
 
 // ==========================================
-// LÓGICA DO SITE
+// LÓGICA DE FUTEBOL (PRINCIPAIS vs OUTROS)
 // ==========================================
-
-// --- FUTEBOL ---
 const myHeaders = new Headers();
 myHeaders.append("x-rapidapi-key", API_CONFIG.key);
 myHeaders.append("x-rapidapi-host", "v3.football.api-sports.io");
@@ -50,71 +47,102 @@ const requestOptions = { method: 'GET', headers: myHeaders, redirect: 'follow' }
 
 async function getMatches() {
     const updateIndicator = document.getElementById('update-indicator');
-    const matchesTitle = document.getElementById('matches-title');
-    const container = document.getElementById('today-matches');
+    const mainContainer = document.getElementById('main-matches');
+    const otherContainer = document.getElementById('other-matches');
+    const btnContainer = document.getElementById('show-more-container');
     
-    if(!container) return; 
+    if(!mainContainer) return; 
 
-    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Buscando jogos...';
+    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Organizando a tabela da semana...';
 
     const today = new Date();
     const todayStr = formatDate(today);
-    let url = `${API_CONFIG.url}/fixtures?date=${todayStr}&timezone=America/Sao_Paulo`;
+    // Busca SEMPRE os próximos 7 dias para garantir agenda cheia
+    const nextWeek = addDays(today, 7);
+    const nextWeekStr = formatDate(nextWeek);
+    
+    // URL busca intervalo de datas
+    let url = `${API_CONFIG.url}/fixtures?from=${todayStr}&to=${nextWeekStr}&timezone=America/Sao_Paulo`;
     
     try {
         let response = await fetch(url, requestOptions);
         let data = await response.json();
-        let matches = filterBrazilianMatches(data.response);
-        let periodTitle = "Jogos de Hoje";
+        
+        // Filtra brasileiros
+        let allMatches = filterBrazilianMatches(data.response);
 
-        if (matches.length === 0) {
-            const nextWeek = addDays(today, 7);
-            const nextWeekStr = formatDate(nextWeek);
-            url = `${API_CONFIG.url}/fixtures?from=${todayStr}&to=${nextWeekStr}&timezone=America/Sao_Paulo`;
-            if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-calendar-week mr-2"></i>Buscando na semana...';
-            response = await fetch(url, requestOptions);
-            data = await response.json();
-            matches = filterBrazilianMatches(data.response);
-            periodTitle = "Jogos da Semana";
+        // SEPARAÇÃO INTELIGENTE
+        // Ligas Principais: Série A, Copa do Brasil, Libertadores, Sula, Mundial, Seleção
+        const priorityTerms = ['Serie A', 'Copa do Brasil', 'Libertadores', 'Sudamericana', 'Recopa', 'World Cup', 'Mundial'];
+
+        const mainGames = allMatches.filter(match => {
+            const leagueName = match.league.name;
+            const isSelecao = match.teams.home.name === "Brazil" || match.teams.away.name === "Brazil";
+            // Verifica se o nome da liga contém algum termo prioritário
+            const isPriorityLeague = priorityTerms.some(term => leagueName.includes(term));
+            return isSelecao || isPriorityLeague;
+        });
+
+        // O resto vai para "Outros Jogos" (Série B, Estaduais, Feminino, Sub-20)
+        const otherGames = allMatches.filter(match => !mainGames.includes(match));
+
+        // RENDERIZAÇÃO
+        if (mainGames.length > 0) {
+            renderMatches(mainGames, mainContainer);
+        } else {
+            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo "Principal" (Série A/Liberta/Copa) nesta semana.</p></div>`;
         }
 
-        if(matchesTitle) matchesTitle.textContent = periodTitle;
-        renderMatches(matches, container);
+        // Configura botão de "Ver Mais"
+        if (otherGames.length > 0) {
+            renderMatches(otherGames, otherContainer);
+            btnContainer.classList.remove('hidden');
+            // Atualiza texto do botão com quantidade
+            btnContainer.querySelector('button').innerHTML = `<i class="fas fa-chevron-down mr-2"></i> Ver +${otherGames.length} jogos (Outras Ligas)`;
+        } else {
+            btnContainer.classList.add('hidden');
+        }
+        
         if(updateIndicator) {
             const time = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Atualizado às ${time}`;
+            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Agenda atualizada às ${time}`;
         }
+
     } catch (error) {
         console.error('Erro API:', error);
-        container.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Sistema indisponível.</p></div>`;
+        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Sistema indisponível no momento.</p></div>`;
     }
 }
 
+// Filtra apenas jogos que envolvem Brasil (Ligas ou Times)
 function filterBrazilianMatches(matches) {
     if (!matches) return [];
     return matches.filter(match => {
         const c = match.league.country;
         const h = match.teams.home.name;
         const a = match.teams.away.name;
+        // Lógica: País é Brasil OU Time é "Brazil" (Seleção)
         return c === "Brazil" || h === "Brazil" || a === "Brazil";
-    }).slice(0, 9).sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
+    }).sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
 }
 
+// Função de Renderização (Reaproveitada para ambos os containers)
 function renderMatches(matches, container) {
-    if (matches.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo encontrado.</p></div>`;
-        return;
-    }
     const html = matches.map(match => {
         const status = translateStatus(match.fixture.status.short);
         const isLive = ['1H', '2H', 'HT', 'LIVE'].includes(match.fixture.status.short);
         const d = new Date(match.fixture.date);
         const dateDisplay = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} • ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+        
+        let borderColor = 'border-gray-100';
+        if(match.league.name.includes('Serie A')) borderColor = 'border-green-200';
+        if(match.league.name.includes('Libertadores')) borderColor = 'border-yellow-200';
+
         return `
-            <div class="bg-white rounded-lg shadow-md card-hover p-4 border border-gray-100 relative">
+            <div class="bg-white rounded-lg shadow-md card-hover p-4 border ${borderColor} relative">
                 <div class="flex items-center justify-between mb-4 border-b pb-2">
                     <span class="${isLive ? 'bg-red-100 text-red-800 animate-pulse' : 'bg-gray-100 text-gray-600'} px-2 py-1 rounded text-xs font-bold uppercase">${isLive ? 'AO VIVO' : status}</span>
-                    <span class="text-xs text-gray-500 text-right"><div class="font-bold">${dateDisplay}</div><div class="truncate max-w-[150px]">${match.league.name}</div></span>
+                    <span class="text-xs text-gray-500 text-right"><div class="font-bold">${dateDisplay}</div><div class="truncate max-w-[150px] text-blue-600 font-medium">${match.league.name}</div></span>
                 </div>
                 <div class="flex items-center justify-between px-2">
                     <div class="flex flex-col items-center w-[30%]"><img src="${match.teams.home.logo}" class="w-12 h-12 object-contain mb-2"><p class="text-xs font-bold text-center leading-tight">${match.teams.home.name}</p></div>
@@ -127,7 +155,21 @@ function renderMatches(matches, container) {
     container.innerHTML = html;
 }
 
-// --- FILMES (CORREÇÃO DE PÔSTER APLICADA AQUI) ---
+// Função para mostrar/esconder os jogos secundários
+function toggleOtherGames() {
+    const container = document.getElementById('other-matches');
+    const btn = document.querySelector('#show-more-container button');
+    
+    if (container.classList.contains('hidden')) {
+        container.classList.remove('hidden');
+        btn.innerHTML = `<i class="fas fa-chevron-up mr-2"></i> Ocultar jogos menores`;
+    } else {
+        container.classList.add('hidden');
+        btn.innerHTML = `<i class="fas fa-chevron-down mr-2"></i> Ver jogos de outras ligas`;
+    }
+}
+
+// --- FILMES ---
 function renderMovies() {
     const container = document.getElementById('movies-container');
     if(!container) return;
@@ -144,7 +186,6 @@ function renderMovies() {
     container.innerHTML = html;
 }
 
-// --- MODAL YOUTUBE ---
 function openTrailer(id) {
     const m = document.getElementById('video-modal');
     const p = document.getElementById('youtube-player');
