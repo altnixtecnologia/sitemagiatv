@@ -2,9 +2,10 @@
 // CONFIGURAÇÃO DA API E DADOS
 // ==========================================
 const API_CONFIG = {
-    key: '6eeb6ad06d3edbcb77ae34be643302da', // Sua Chave
+    key: '6eeb6ad06d3edbcb77ae34be643302da', 
     url: 'https://v3.football.api-sports.io',
-    whatsappNumber: '5548999999999' // ATENÇÃO: COLOQUE SEU NÚMERO AQUI (apenas números)
+    // ATENÇÃO: NÚMERO ATUALIZADO
+    whatsappNumber: '5548991004780' 
 };
 
 const myHeaders = new Headers();
@@ -26,7 +27,7 @@ async function getMatches() {
     const matchesTitle = document.getElementById('matches-title');
     const container = document.getElementById('today-matches');
     
-    if(!container) return; // Proteção caso a div não exista
+    if(!container) return; 
 
     if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Buscando jogos...';
 
@@ -40,11 +41,10 @@ async function getMatches() {
         let response = await fetch(url, requestOptions);
         let data = await response.json();
         
-        // Filtra apenas Brasil e Seleção
         let matches = filterBrazilianMatches(data.response);
         let periodTitle = "Jogos de Hoje";
 
-        // Se não tiver jogo hoje, busca da SEMANA (Próximos 7 dias)
+        // Se não tiver jogo hoje, busca da SEMANA
         if (matches.length === 0) {
             const nextWeek = addDays(today, 7);
             const nextWeekStr = formatDate(nextWeek);
@@ -59,7 +59,6 @@ async function getMatches() {
             periodTitle = "Jogos da Semana";
         }
 
-        // Atualiza a tela
         if(matchesTitle) matchesTitle.textContent = periodTitle;
         renderMatches(matches, container);
         
@@ -77,7 +76,6 @@ async function getMatches() {
     }
 }
 
-// Filtra jogos relevantes para o público brasileiro
 function filterBrazilianMatches(matches) {
     if (!matches) return [];
     
@@ -86,14 +84,13 @@ function filterBrazilianMatches(matches) {
         const homeName = match.teams.home.name;
         const awayName = match.teams.away.name;
 
-        // Regra: Liga do Brasil OU Time chamado "Brazil" (Seleção)
         const isBrazil = country === "Brazil";
         const isSelecao = homeName === "Brazil" || awayName === "Brazil";
         
         return isBrazil || isSelecao;
     })
-    .slice(0, 9) // Limita a 9 jogos para não encher demais a tela
-    .sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date)); // Ordena por data
+    .slice(0, 9)
+    .sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
 }
 
 function renderMatches(matches, container) {
@@ -111,7 +108,6 @@ function renderMatches(matches, container) {
         const isLive = ['1H', '2H', 'HT', 'LIVE'].includes(match.fixture.status.short);
         const date = new Date(match.fixture.date);
         
-        // Formatação de data/hora
         const day = date.getDate().toString().padStart(2, '0');
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
         const hour = date.getHours().toString().padStart(2, '0');
@@ -190,8 +186,23 @@ function addDays(date, days) {
     return result;
 }
 
+// Abre WhatsApp pedindo TESTE (Botão do Banner)
+function requestTest() {
+    const text = `Olá! 👋 Gostaria de *PEDIR UM TESTE* grátis no MagiaTV.`;
+    const url = `https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+}
+
+// Abre WhatsApp para um jogo específico
 function openWhatsAppGame(home, away) {
     const text = `⚽ Olá! Quero assistir ao jogo *${home} x ${away}* no MagiaTV!`;
+    const url = `https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+}
+
+// Abre WhatsApp para contratar plano
+function buyPlan(planName, price) {
+    const text = `💰 Olá! Tenho interesse no *${planName}* (${price}). Como faço para assinar?`;
     const url = `https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
 }
@@ -203,18 +214,15 @@ function openWhatsAppGame(home, away) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 MagiaTV Iniciado');
     
-    // Inicia Futebol
     getMatches();
-    setInterval(getMatches, 300000); // Atualiza a cada 5 min
+    setInterval(getMatches, 300000); 
 
-    // Menu Mobile
     const menuBtn = document.getElementById('menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
     if (menuBtn && mobileMenu) {
         menuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
     }
 
-    // Scroll Suave
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
@@ -223,7 +231,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Formulário Contato
     const form = document.getElementById('contato-form');
     if (form) {
         form.addEventListener('submit', (e) => {
