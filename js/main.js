@@ -35,11 +35,11 @@ const MOVIE_HIGHLIGHTS = [
 const API_CONFIG = {
     key: '6eeb6ad06d3edbcb77ae34be643302da', 
     url: 'https://v3.football.api-sports.io',
-    whatsappNumber: '5548991004780' // Seu número
+    whatsappNumber: '5548991004780' 
 };
 
 // ==========================================
-// LÓGICA DO SITE (NÃO PRECISA MEXER ABAIXO)
+// LÓGICA DO SITE
 // ==========================================
 
 // --- FUTEBOL ---
@@ -127,13 +127,13 @@ function renderMatches(matches, container) {
     container.innerHTML = html;
 }
 
-// --- FILMES ---
+// --- FILMES (CORREÇÃO DE PÔSTER APLICADA AQUI) ---
 function renderMovies() {
     const container = document.getElementById('movies-container');
     if(!container) return;
     const html = MOVIE_HIGHLIGHTS.map(movie => `
         <div class="bg-white rounded-lg shadow-md card-hover overflow-hidden group">
-            <div class="relative h-64 overflow-hidden">
+            <div class="relative aspect-[2/3] overflow-hidden">
                 <img src="${movie.image}" alt="${movie.title}" class="w-full h-full object-cover transition duration-300 group-hover:scale-110">
                 <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
                     <button onclick="openTrailer('${movie.trailerId}')" class="bg-white text-red-600 w-12 h-12 rounded-full flex items-center justify-center hover:scale-110 transition shadow-lg"><i class="fas fa-play ml-1"></i></button>
