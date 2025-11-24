@@ -21,7 +21,7 @@
     
     <header class="gradient-bg text-white shadow-lg">
         <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-6">
                 <div class="relative">
                     <img src="https://yftikqosmgpfzoacrwxz.supabase.co/storage/v1/object/public/Imagens/logo%20magiatv.png" 
                          alt="MagiaTV Logo" 
@@ -71,20 +71,32 @@
             <div class="mb-16">
                 <div class="text-center mb-10">
                     <h4 class="text-2xl font-semibold text-green-600 mb-2">
-                        <i class="fas fa-futbol mr-2"></i>Futebol Ao Vivo
+                        <i class="fas fa-futbol mr-2"></i>Futebol na Semana
                     </h4>
-                    <h3 id="matches-title" class="text-4xl font-bold text-gray-800">Jogos de Hoje</h3>
+                    <h3 id="matches-title" class="text-4xl font-bold text-gray-800">Jogos Principais</h3>
                     <div id="update-indicator" class="mt-2 text-sm text-gray-500">
                         <i class="fas fa-sync-alt mr-2 animate-spin"></i>
-                        Carregando jogos...
+                        Carregando tabela...
                     </div>
                 </div>
-                <div id="today-matches" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[200px]"></div>
+
+                <div id="main-matches" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[100px]">
+                    </div>
+
+                <div id="show-more-container" class="text-center mt-8 hidden">
+                    <button onclick="toggleOtherGames()" class="bg-white border-2 border-gray-300 text-gray-600 px-6 py-2 rounded-full font-semibold hover:bg-gray-50 hover:border-gray-400 transition shadow-sm">
+                        <i class="fas fa-chevron-down mr-2"></i>
+                        Ver jogos de outras ligas
+                    </button>
+                </div>
+
+                <div id="other-matches" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 hidden transition-all duration-500">
+                    </div>
             </div>
 
             <hr class="border-gray-200 my-12">
 
-            <h3 class="text-3xl font-bold text-center mb-8 text-gray-800">Filmes e Séries - Lançamentos!</h3>
+            <h3 class="text-3xl font-bold text-center mb-8 text-gray-800">Filmes em Alta</h3>
             <div id="movies-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 </div>
         </div>
@@ -129,7 +141,7 @@
                                 <div class="flex justify-between items-center">
                                     <div>
                                         <span class="text-blue-800 font-bold block">Anual</span>
-                                        <span class="text-xs text-blue-600">+ App PRO grátis</span>
+                                        <span class="text-xs text-blue-600">+ App Grátis</span>
                                     </div>
                                     <div class="text-right">
                                         <span class="text-3xl font-bold text-blue-700">R$ 190,00</span>
