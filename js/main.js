@@ -1,5 +1,5 @@
 // ==========================================
-// 1. ÁREA DOS FILMES EM ALTA
+// 1. FILMES EM ALTA (RESTAURADO)
 // ==========================================
 const MOVIE_HIGHLIGHTS = [
     { "title": "Plano em Família 2 (2025)", "category": "Ação", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/aLgvLNWETZ2wtPzU3E7lavEpCJw.jpg", "trailerId": "64-0cFnQ6Ls" },
@@ -37,7 +37,7 @@ async function getMatches() {
             updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Agenda MagiaTV atualizada às ${time}`;
         }
     } catch (e) {
-        mainContainer.innerHTML = `<p class="text-center text-red-500 font-bold">Erro ao conectar com a MagiaTV.</p>`;
+        mainContainer.innerHTML = `<p class="text-center text-red-500 font-bold">Erro ao conectar com o servidor.</p>`;
     }
 }
 
@@ -68,7 +68,7 @@ function renderMatches(matches, container) {
 }
 
 // ==========================================
-// 3. FILMES E UTILITÁRIOS (RESTAURADOS)
+// 3. UTILITÁRIOS E WHATSAPP (RESTAURADOS)
 // ==========================================
 function renderMovies() {
     const container = document.getElementById('movies-container');
@@ -86,7 +86,7 @@ function renderMovies() {
 function openTrailer(id) { document.getElementById('youtube-player').src = `https://www.youtube.com/embed/${id}?autoplay=1`; document.getElementById('video-modal').classList.remove('hidden'); }
 function closeVideoModal() { document.getElementById('youtube-player').src = ''; document.getElementById('video-modal').classList.add('hidden'); }
 
-// Funções de WhatsApp (Resolve o erro "is not defined")
+// Funções que resolvem o erro de ReferenceError
 function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Olá! Vim pelo site.`, '_blank'); }
 function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assistir ${h} x ${a} na MagiaTV!`)}`, '_blank'); }
 function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis na MagiaTV!`, '_blank'); }
