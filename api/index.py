@@ -15,7 +15,7 @@ API_CONFIG = {
 
 @app.route('/api/matches', methods=['GET'])
 def get_unified_matches():
-    # 1. BUSCA DADOS NA WYSTER (FONTE PRINCIPAL)
+    # 1. BUSCA NA WYSTER (FONTE PRINCIPAL E ILIMITADA)
     wyster_data = []
     try:
         res_w = requests.post(
@@ -28,7 +28,7 @@ def get_unified_matches():
             wyster_data = res_w.json()
     except: pass
 
-    # 2. BUSCA LOGOS NA API-SPORTS (OPCIONAL)
+    # 2. BUSCA NA API-SPORTS (APENAS PARA LOGOS E DETALHES)
     today = (datetime.utcnow() - timedelta(hours=3)).strftime('%Y-%m-%d')
     sports_data = []
     try:
@@ -42,7 +42,7 @@ def get_unified_matches():
             sports_data = res_s.json().get('response', [])
     except: pass
 
-    # 3. UNIFICAÇÃO
+    # 3. UNIFICAÇÃO DOS DADOS
     final_list = []
     for w_game in wyster_data:
         home_w = w_game.get('time1', '').lower().strip()
@@ -58,7 +58,7 @@ def get_unified_matches():
             "canais": w_game.get('canais', [])
         }
 
-        # Tenta cruzar logos
+        # Tenta encontrar o logo oficial na API-Sports
         for s in sports_data:
             s_home = s['teams']['home']['name'].lower()
             if home_w[:5] in s_home or s_home in home_w[:5]:
