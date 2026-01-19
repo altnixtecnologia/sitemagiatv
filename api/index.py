@@ -4,8 +4,10 @@ import requests
 from datetime import datetime
 
 app = Flask(__name__)
+# Permite que o seu site no GitHub Pages acesse os dados
 CORS(app)
 
+# Configurações da MagiaTV
 API_CONFIG = {
     'KEY': '6eeb6ad06d3edbcb77ae34be643302da',
     'FOOTBALL_URL': 'https://v3.football.api-sports.io',
@@ -17,28 +19,46 @@ API_CONFIG = {
 def get_unified_matches():
     today = datetime.now().strftime('%Y-%m-%d')
     
-    # 1. Busca jogos na API-Sports
+    # 1. Busca jogos na API-Sports (Filtro por data de hoje)
     headers = {'x-apisports-key': API_CONFIG['KEY']}
-    res_sports = requests.get(f"{API_CONFIG['FOOTBALL_URL']}/fixtures", 
-                            params={'date': today, 'timezone': 'America/Sao_Paulo'}, 
-                            headers=headers)
-    sports_data = res_sports.json().get('response', [])
+    try:
+        res_sports = requests.get(
+            f"{API_CONFIG['FOOTBALL_URL']}/fixtures", 
+            params={'date': today, 'timezone': 'America/Sao_Paulo'}, 
+            headers=headers,
+            timeout=10
+        )
+        sports_data = res_sports.json().get('response', [])
+    except Exception:
+        sports_data = []
 
     # 2. Busca canais no Wyster Jogos
-    res_wyster = requests.post(API_CONFIG['WYSTER_URL'], 
-                             data={'token': API_CONFIG['WYSTER_TOKEN']}, 
-                             headers={'X-Requested-With': 'XMLHttpRequest'})
-    wyster_data = res_wyster.json() if res_wyster.status_code == 200 else []
+    try:
+        res_wyster = requests.post(
+            API_CONFIG['WYSTER_URL'], 
+            data={'token': API_CONFIG['WYSTER_TOKEN']}, 
+            headers={'X-Requested-With': 'XMLHttpRequest'},
+            timeout=10
+        )
+        wyster_data = res_wyster.json() if res_wyster.status_code == 200 else []
+    except Exception:
+        wyster_data = []
 
     # 3. Lógica de Cruzamento: Adiciona canais aos jogos da API-Sports
     for match in sports_data:
-        home_team = match['teams']['home']['name'].lower()
-        match['canais'] = [] # Padrão vazio
+        # Normaliza nomes para comparação (Criciúma -> criciuma)
+        home_name = match['teams']['home']['name'].lower()
+        match['canais'] = [] 
         
         for w_game in wyster_data:
-            # Se o nome do time da casa bater (mesmo que parcialmente)
-            if w_game['time1'].lower() in home_team or home_team in w_game['time1'].lower():
+            w_home = w_game.get('time1', '').lower()
+            # Verifica se o nome do time da casa existe em ambos os sistemas
+            if w_home and (w_home in home_name or home_name in w_home):
                 match['canais'] = w_game.get('canais', [])
                 break
 
     return jsonify({"response": sports_data})
+
+# Necessário para rodar localmente no VS Code se precisar
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
