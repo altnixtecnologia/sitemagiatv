@@ -6,6 +6,7 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 
+# Configurações da MagiaTV
 API_CONFIG = {
     'KEY': '6eeb6ad06d3edbcb77ae34be643302da',
     'FOOTBALL_URL': 'https://v3.football.api-sports.io',
@@ -19,40 +20,42 @@ def get_unified_matches():
     
     # 1. Busca jogos na API-Sports
     headers = {'x-apisports-key': API_CONFIG['KEY']}
+    sports_data = []
     try:
         res_sports = requests.get(
             f"{API_CONFIG['FOOTBALL_URL']}/fixtures", 
             params={'date': today, 'timezone': 'America/Sao_Paulo'}, 
             headers=headers,
-            timeout=10
+            timeout=8
         )
-        sports_data = res_sports.json().get('response', [])
+        if res_sports.status_code == 200:
+            sports_data = res_sports.json().get('response', [])
     except Exception as e:
-        return jsonify({"error": f"Erro API-Sports: {str(e)}"}), 500
+        print(f"Erro Sports: {e}")
 
     # 2. Busca canais no Wyster Jogos
+    wyster_data = []
     try:
         res_wyster = requests.post(
             API_CONFIG['WYSTER_URL'], 
             data={'token': API_CONFIG['WYSTER_TOKEN']}, 
             headers={'X-Requested-With': 'XMLHttpRequest'},
-            timeout=10
+            timeout=5
         )
-        wyster_data = res_wyster.json() if res_wyster.status_code == 200 else []
-    except Exception:
-        wyster_data = []
+        if res_wyster.status_code == 200:
+            wyster_data = res_wyster.json()
+    except Exception as e:
+        print(f"Erro Wyster: {e}")
 
-    # 3. Cruzamento Simplificado (Resolve Criciúma vs Criciuma)
+    # 3. Lógica de Cruzamento Defensiva
     for match in sports_data:
-        # Pega o nome do time da casa e remove espaços extras
-        home_name = match['teams']['home']['name'].lower().strip()
-        match['canais'] = [] 
+        match['canais'] = [] # Garante que o campo existe para não dar erro no JS
+        home_team_api = match['teams']['home']['name'].lower()
         
         for w_game in wyster_data:
-            w_home = w_game.get('time1', '').lower().strip()
-            
-            # Se um nome contém o outro (ex: "Criciuma" está em "Criciúma E.C.")
-            if w_home and (w_home[:5] in home_name or home_name[:5] in w_home):
+            home_team_wyster = w_game.get('time1', '').lower()
+            # Se os nomes forem parecidos (ex: contém "criciuma"), anexa os canais
+            if home_team_wyster and (home_team_wyster in home_team_api or home_team_api in home_team_wyster):
                 match['canais'] = w_game.get('canais', [])
                 break
 
