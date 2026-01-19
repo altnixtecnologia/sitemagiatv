@@ -15,19 +15,20 @@ API_CONFIG = {
 
 @app.route('/api/matches', methods=['GET'])
 def get_unified_matches():
-    # 1. PEGA DADOS DA WYSTER (FONTE PRINCIPAL)
+    # 1. BUSCA DADOS NA WYSTER (FONTE PRINCIPAL)
     wyster_data = []
     try:
         res_w = requests.post(
             API_CONFIG['WYSTER_URL'], 
             data={'token': API_CONFIG['WYSTER_TOKEN']}, 
             headers={'X-Requested-With': 'XMLHttpRequest'},
-            timeout=5
+            timeout=10
         )
-        wyster_data = res_w.json() if res_w.status_code == 200 else []
+        if res_w.status_code == 200:
+            wyster_data = res_w.json()
     except: pass
 
-    # 2. PEGA LOGOS DA API-SPORTS (BACKUP)
+    # 2. BUSCA LOGOS NA API-SPORTS (OPCIONAL)
     today = (datetime.utcnow() - timedelta(hours=3)).strftime('%Y-%m-%d')
     sports_data = []
     try:
@@ -37,34 +38,32 @@ def get_unified_matches():
             headers={'x-apisports-key': API_CONFIG['KEY']},
             timeout=5
         )
-        sports_data = res_s.json().get('response', [])
+        if res_s.status_code == 200:
+            sports_data = res_s.json().get('response', [])
     except: pass
 
-    # 3. MONTA A LISTA FINAL BASEADA NA WYSTER
+    # 3. UNIFICAÇÃO
     final_list = []
     for w_game in wyster_data:
-        home_w = w_game.get('time1', '').lower()
+        home_w = w_game.get('time1', '').lower().strip()
         
-        # Estrutura base garantida para o JS
         game_obj = {
             "teams": {
                 "home": {"name": w_game.get('time1'), "logo": "https://media.api-sports.io/football/teams/default.png"},
                 "away": {"name": w_game.get('time2'), "logo": "https://media.api-sports.io/football/teams/default.png"}
             },
-            "league": {"name": "MagiaTV Ao Vivo"},
-            "fixture": {"status": {"short": "LIVE" if "AO VIVO" in w_game.get('status', '') else "NS"}},
+            "league": {"name": "Programação MagiaTV"},
+            "fixture": {"status": {"short": "LIVE" if "AO VIVO" in w_game.get('status', '') else "NS"}, "date": today},
             "goals": {"home": 0, "away": 0},
             "canais": w_game.get('canais', [])
         }
 
-        # Tenta enriquecer com logos se a API-Sports tiver dados
+        # Tenta cruzar logos
         for s in sports_data:
             s_home = s['teams']['home']['name'].lower()
             if home_w[:5] in s_home or s_home in home_w[:5]:
                 game_obj["teams"]["home"]["logo"] = s['teams']['home']['logo']
                 game_obj["teams"]["away"]["logo"] = s['teams']['away']['logo']
-                game_obj["goals"] = s['goals']
-                game_obj["fixture"]["status"] = s['fixture']['status']
                 game_obj["league"]["name"] = s['league']['name']
                 break
         
