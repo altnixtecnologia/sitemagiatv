@@ -17,7 +17,7 @@ const API_CONFIG = {
 };
 
 // ==========================================
-// 3. LÓGICA DE FUTEBOL
+// 3. LÓGICA DE FUTEBOL (VERSÃO SEGURA)
 // ==========================================
 
 async function getMatches() {
@@ -25,26 +25,23 @@ async function getMatches() {
     const mainContainer = document.getElementById('main-matches');
     
     if(!mainContainer) return; 
-    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Sincronizando com a Nuvem...';
+    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Carregando jogos...';
 
     try {
         const response = await fetch(API_CONFIG.backendUrl);
-        if (!response.ok) throw new Error('Falha na resposta do servidor');
-        
         const data = await response.json();
-        const responseList = data.response || [];
         
-        // Filtra para mostrar apenas o que é do Brasil ou Estaduais
-        let allMatches = responseList.filter(match => {
+        // Filtro amplo para garantir que o Catarinense apareça
+        let allMatches = (data.response || []).filter(match => {
             const league = (match.league.name || "").toLowerCase();
             const country = (match.league.country || "").toLowerCase();
-            return country === "brazil" || league.includes("paulista") || league.includes("carioca") || league.includes("catarinense") || league.includes("copinha");
+            return country === "brazil" || league.includes("catarinense") || league.includes("copinha") || league.includes("paulista") || league.includes("carioca");
         });
 
         if (allMatches.length > 0) {
             renderMatches(allMatches, mainContainer);
         } else {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo localizado. Tente atualizar em instantes.</p></div>`;
+            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo localizado no momento. Tente atualizar a página.</p></div>`;
         }
 
         if(updateIndicator) {
@@ -53,8 +50,8 @@ async function getMatches() {
         }
 
     } catch (error) {
-        console.error("Erro na Vercel:", error);
-        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-red-500 font-bold">Servidor em manutenção ou desligado.</p></div>`;
+        console.error("Erro no fetch:", error);
+        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Erro ao conectar com o servidor da MagiaTV.</p></div>`;
     }
 }
 
@@ -64,16 +61,17 @@ function renderMatches(matches, container) {
         const d = new Date(match.fixture.date);
         const dateDisplay = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} • ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
         
-        let borderColor = match.league.name.includes('Catarinense') ? 'border-blue-400' : 'border-gray-100';
+        // Destaque para o Catarinense
+        let borderColor = match.league.name.includes('Catarinense') ? 'border-blue-500 shadow-lg' : 'border-gray-100';
 
-        // Renderiza canais se houver
+        // Canais vindos do backend
         let channelsHtml = '';
         if (match.canais && match.canais.length > 0) {
             channelsHtml = `
-                <div class="mt-3 pt-2 border-t border-gray-100 flex flex-wrap justify-center gap-3">
+                <div class="mt-3 pt-2 border-t border-gray-100 flex flex-wrap justify-center gap-2">
                     ${match.canais.map(c => `
                         <div class="flex flex-col items-center">
-                            <img src="${c.img_url}" class="h-5 w-auto object-contain" title="${c.nome}">
+                            <img src="${c.img_url}" class="h-5 w-auto object-contain mb-1" title="${c.nome}">
                             <span class="text-[7px] text-gray-400 font-bold uppercase">${c.nome}</span>
                         </div>
                     `).join('')}
@@ -104,9 +102,7 @@ function renderMovies() {
         <div class="bg-white rounded-lg shadow-md overflow-hidden group">
             <div class="relative aspect-[2/3] overflow-hidden">
                 <img src="${movie.image}" alt="${movie.title}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
-                <button onclick="openTrailer('${movie.trailerId}')" class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
-                    <i class="fas fa-play text-white text-3xl"></i>
-                </button>
+                <button onclick="openTrailer('${movie.trailerId}')" class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300"><i class="fas fa-play text-white text-3xl"></i></button>
             </div>
             <div class="p-4"><h5 class="font-bold text-gray-800 text-sm mb-1">${movie.title}</h5></div>
         </div>`).join('');
@@ -117,6 +113,6 @@ function closeVideoModal() { document.getElementById('youtube-player').src = '';
 function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Olá!`, '_blank'); }
 function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assistir ${h} x ${a} no MagiaTV!`)}`, '_blank'); }
 function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis`, '_blank'); }
-function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero o plano ${p}`)}`, '_blank'); }
+function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assinar o ${p} de ${v}.`)}`, '_blank'); }
 
 document.addEventListener('DOMContentLoaded', () => { getMatches(); renderMovies(); if(document.getElementById('menu-btn')) document.getElementById('menu-btn').onclick = () => document.getElementById('mobile-menu').classList.toggle('hidden'); });
