@@ -14,7 +14,7 @@ const API_CONFIG = {
 };
 
 // ==========================================
-// 2. LÓGICA DE FUTEBOL
+// 2. LÓGICA DE FUTEBOL COM DIAGNÓSTICO
 // ==========================================
 async function getMatches() {
     const mainContainer = document.getElementById('main-matches');
@@ -29,15 +29,17 @@ async function getMatches() {
         if (responseList.length > 0) {
             renderMatches(responseList, mainContainer);
         } else {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Nenhuma transmissão ao vivo no momento.</p></div>`;
+            // Mostra o erro técnico se houver
+            const errorMsg = data.debug_error || "Nenhum canal ativo no painel no momento.";
+            mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500 text-sm italic">${errorMsg}</p></div>`;
         }
 
         if(updateIndicator) {
             const time = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Agenda MagiaTV atualizada às ${time}`;
+            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Grade MagiaTV atualizada às ${time}`;
         }
     } catch (e) {
-        mainContainer.innerHTML = `<p class="text-center text-red-500 font-bold">Erro ao conectar com o servidor.</p>`;
+        mainContainer.innerHTML = `<p class="text-center text-red-500 font-bold">Erro crítico de conexão com a Vercel.</p>`;
     }
 }
 
@@ -46,14 +48,14 @@ function renderMatches(matches, container) {
         const isLive = ['1H', '2H', 'HT', 'LIVE'].includes(match.fixture.status.short);
         let channelsHtml = (match.canais || []).map(c => `
             <div class="flex flex-col items-center">
-                <img src="${c.img_url}" class="h-6 w-auto object-contain" onerror="this.src='https://via.placeholder.com/30?text=TV'">
+                <img src="${c.img_url}" class="h-6 w-auto object-contain" onerror="this.src='https://via.placeholder.com/20?text=TV'">
                 <span class="text-[7px] text-gray-400 font-bold uppercase mt-1">${c.nome}</span>
             </div>`).join('');
 
         return `
             <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500 card-hover">
                 <div class="flex items-center justify-between mb-4 border-b pb-2">
-                    <span class="${isLive ? 'bg-red-100 text-red-800 animate-pulse' : 'bg-gray-100 text-gray-600'} px-2 py-1 rounded text-xs font-bold uppercase">${isLive ? 'AO VIVO' : 'Canais'}</span>
+                    <span class="${isLive ? 'bg-red-100 text-red-800 animate-pulse' : 'bg-gray-100 text-gray-600'} px-2 py-1 rounded text-xs font-bold uppercase">${isLive ? 'AO VIVO' : 'Agendado'}</span>
                     <span class="text-xs text-blue-600 font-bold truncate max-w-[150px]">${match.league.name}</span>
                 </div>
                 <div class="flex items-center justify-between px-2">
@@ -68,7 +70,7 @@ function renderMatches(matches, container) {
 }
 
 // ==========================================
-// 3. UTILITÁRIOS E WHATSAPP (RESTAURADOS)
+// 3. UTILITÁRIOS RESTAURADOS
 // ==========================================
 function renderMovies() {
     const container = document.getElementById('movies-container');
@@ -86,7 +88,7 @@ function renderMovies() {
 function openTrailer(id) { document.getElementById('youtube-player').src = `https://www.youtube.com/embed/${id}?autoplay=1`; document.getElementById('video-modal').classList.remove('hidden'); }
 function closeVideoModal() { document.getElementById('youtube-player').src = ''; document.getElementById('video-modal').classList.add('hidden'); }
 
-// Funções que resolvem o erro de ReferenceError
+// Funções de WhatsApp e Teste Grátis
 function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Olá! Vim pelo site.`, '_blank'); }
 function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assistir ${h} x ${a} na MagiaTV!`)}`, '_blank'); }
 function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis na MagiaTV!`, '_blank'); }
