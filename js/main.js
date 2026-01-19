@@ -12,35 +12,25 @@ const MOVIE_HIGHLIGHTS = [
 // 2. CONFIGURAÇÕES GERAIS
 // ==========================================
 const API_CONFIG = {
-    // Agora apontamos para o SEU servidor na Vercel
     backendUrl: 'https://sitemagiatv.vercel.app/api/matches',
     whatsappNumber: '5548991004780' 
 };
 
 // ==========================================
-// 3. LÓGICA DE FUTEBOL (CONEXÃO VIA VERCEL)
+// 3. LÓGICA DE FUTEBOL
 // ==========================================
 
 async function getMatches() {
     const updateIndicator = document.getElementById('update-indicator');
     const mainContainer = document.getElementById('main-matches');
-    const otherContainer = document.getElementById('other-matches');
-    const btnContainer = document.getElementById('show-more-container');
     
     if(!mainContainer) return; 
-
-    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Sincronizando via Vercel...';
+    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Sincronizando canais e jogos...';
 
     try {
-        // Chamada simplificada: o Python na Vercel já cuida da chave e das datas
         let response = await fetch(API_CONFIG.backendUrl);
         let data = await response.json();
         
-        if (data.errors && data.errors.requests) {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-yellow-50 border border-yellow-300 rounded-lg"><p class="text-yellow-800 font-bold">Limite diário atingido.</p></div>`;
-            return;
-        }
-
         let allMatches = (data.response || []).filter(match => {
             const league = (match.league.name || "").toLowerCase();
             const country = (match.league.country || "").toLowerCase();
@@ -49,31 +39,23 @@ async function getMatches() {
 
         const priorityTerms = ['Serie A', 'Copa do Brasil', 'Libertadores', 'Paulista', 'Carioca', 'Gaucho', 'Catarinense', 'Mineiro', 'Copinha'];
         const mainGames = allMatches.filter(match => priorityTerms.some(term => match.league.name.includes(term)));
-        const otherGames = allMatches.filter(match => !mainGames.includes(match));
 
         if (mainGames.length > 0) {
             renderMatches(mainGames, mainContainer);
         } else if (allMatches.length > 0) {
             renderMatches(allMatches, mainContainer);
         } else {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo brasileiro localizado para hoje.</p></div>`;
+            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo brasileiro localizado no momento.</p></div>`;
         }
 
-        if (otherGames.length > 0 && mainGames.length > 0) {
-            renderMatches(otherGames, otherContainer);
-            if(btnContainer) btnContainer.classList.remove('hidden');
-        } else if(btnContainer) {
-            btnContainer.classList.add('hidden');
-        }
-        
         if(updateIndicator) {
             const time = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Agenda MagiaTV sincronizada às ${time}`;
+            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Agenda MagiaTV atualizada às ${time}`;
         }
 
     } catch (error) {
-        console.error("Erro ao conectar com a Vercel:", error);
-        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Erro ao carregar a programação da nuvem.</p></div>`;
+        console.error("Erro Crítico:", error);
+        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Erro ao carregar programação da nuvem.</p></div>`;
     }
 }
 
@@ -83,20 +65,35 @@ function renderMatches(matches, container) {
         const d = new Date(match.fixture.date);
         const dateDisplay = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} • ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
         
-        let borderColor = 'border-gray-100';
-        if(match.league.name.includes('Catarinense')) borderColor = 'border-blue-400';
+        // Borda azul para o Catarinense (Criciúma)
+        let borderColor = match.league.name.includes('Catarinense') ? 'border-blue-400' : 'border-gray-100';
+
+        // HTML dos Canais extraídos do Wyster
+        let channelsHtml = '';
+        if (match.canais && match.canais.length > 0) {
+            channelsHtml = `
+                <div class="mt-3 pt-2 border-t border-gray-100 flex flex-wrap justify-center gap-3">
+                    ${match.canais.map(c => `
+                        <div class="flex flex-col items-center">
+                            <img src="${c.img_url}" class="h-5 w-auto object-contain mb-1" title="${c.nome}">
+                            <span class="text-[7px] text-gray-400 font-bold uppercase">${c.nome}</span>
+                        </div>
+                    `).join('')}
+                </div>`;
+        }
 
         return `
-            <div class="bg-white rounded-lg shadow-md card-hover p-4 border-l-4 ${borderColor} relative">
+            <div class="bg-white rounded-lg shadow-md p-4 border-l-4 ${borderColor} relative card-hover">
                 <div class="flex items-center justify-between mb-4 border-b pb-2">
                     <span class="${isLive ? 'bg-red-100 text-red-800 animate-pulse' : 'bg-gray-100 text-gray-600'} px-2 py-1 rounded text-xs font-bold uppercase">${isLive ? 'AO VIVO' : 'Agendado'}</span>
-                    <span class="text-xs text-gray-500 text-right"><div class="font-bold">${dateDisplay}</div><div class="truncate max-w-[120px] text-blue-600 font-medium">${match.league.name}</div></span>
+                    <span class="text-xs text-gray-500 text-right"><div class="font-bold">${dateDisplay}</div><div class="text-blue-600 font-medium truncate max-w-[120px]">${match.league.name}</div></span>
                 </div>
                 <div class="flex items-center justify-between px-2">
-                    <div class="flex flex-col items-center w-[35%]"><img src="${match.teams.home.logo}" class="w-12 h-12 object-contain mb-2"><p class="text-xs font-bold text-center leading-tight">${match.teams.home.name}</p></div>
-                    <div class="flex flex-col items-center w-[30%]"><div class="text-xl font-black text-gray-700 bg-gray-50 px-3 py-1 rounded">${match.goals.home ?? 0} x ${match.goals.away ?? 0}</div></div>
-                    <div class="flex flex-col items-center w-[35%]"><img src="${match.teams.away.logo}" class="w-12 h-12 object-contain mb-2"><p class="text-xs font-bold text-center leading-tight">${match.teams.away.name}</p></div>
+                    <div class="flex flex-col items-center w-[35%]"><img src="${match.teams.home.logo}" class="w-10 h-10 object-contain"><p class="text-xs font-bold text-center mt-2">${match.teams.home.name}</p></div>
+                    <div class="text-lg font-black text-gray-700">${match.goals.home ?? 0} x ${match.goals.away ?? 0}</div>
+                    <div class="flex flex-col items-center w-[35%]"><img src="${match.teams.away.logo}" class="w-10 h-10 object-contain"><p class="text-xs font-bold text-center mt-2">${match.teams.away.name}</p></div>
                 </div>
+                ${channelsHtml}
                 <button class="w-full mt-4 bg-green-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition" onclick="openWhatsAppGame('${match.teams.home.name}', '${match.teams.away.name}')">Assistir Agora</button>
             </div>`;
     }).join('');
@@ -117,35 +114,21 @@ function renderMovies() {
                     <i class="fas fa-play text-white text-3xl"></i>
                 </button>
             </div>
-            <div class="p-4"><h5 class="font-bold text-gray-800 text-lg mb-1">${movie.title}</h5><p class="text-sm text-gray-500">${movie.category}</p></div>
+            <div class="p-4"><h5 class="font-bold text-gray-800 text-sm mb-1">${movie.title}</h5></div>
         </div>`).join('');
 }
 
-function openTrailer(id) { 
-    document.getElementById('youtube-player').src = `https://www.youtube.com/embed/${id}?autoplay=1`; 
-    document.getElementById('video-modal').classList.remove('hidden'); 
-}
-
-function closeVideoModal() { 
-    document.getElementById('youtube-player').src = ''; 
-    document.getElementById('video-modal').classList.add('hidden'); 
-}
-
-function toggleOtherGames() { document.getElementById('other-matches').classList.toggle('hidden'); }
-
-function translateStatus(s) { const m={'TBD':'A Definir','NS':'Agendado','1H':'1º Tempo','HT':'Intervalo','2H':'2º Tempo','FT':'Fim','LIVE':'Ao Vivo'}; return m[s]||s; }
-
-function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Olá! Vim pelo site MagiaTV.`, '_blank'); }
+function openTrailer(id) { document.getElementById('youtube-player').src = `https://www.youtube.com/embed/${id}?autoplay=1`; document.getElementById('video-modal').classList.remove('hidden'); }
+function closeVideoModal() { document.getElementById('youtube-player').src = ''; document.getElementById('video-modal').classList.add('hidden'); }
+function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Olá! Vim pelo site.`, '_blank'); }
 function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assistir ${h} x ${a} no MagiaTV!`)}`, '_blank'); }
-function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis no MagiaTV!`, '_blank'); }
+function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis`, '_blank'); }
 function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assinar o ${p} de ${v}.`)}`, '_blank'); }
 
-// --- INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', () => { 
     getMatches(); 
     renderMovies(); 
     const b = document.getElementById('menu-btn');
-    const m = document.getElementById('mobile-menu');
-    if(b && m) b.onclick = () => m.classList.toggle('hidden');
+    if(b) b.onclick = () => document.getElementById('mobile-menu').classList.toggle('hidden');
     document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeVideoModal(); });
 });
