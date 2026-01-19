@@ -53,54 +53,48 @@ async function getMatches() {
     
     if(!mainContainer) return; 
 
-    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Organizando a tabela da semana...';
+    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Organizando a agenda da semana...';
 
     const today = new Date();
     const todayStr = formatDate(today);
-    // Busca SEMPRE os próximos 7 dias para garantir agenda cheia
     const nextWeek = addDays(today, 7);
     const nextWeekStr = formatDate(nextWeek);
     
-    // URL busca intervalo de datas
     let url = `${API_CONFIG.url}/fixtures?from=${todayStr}&to=${nextWeekStr}&timezone=America/Sao_Paulo`;
     
     try {
         let response = await fetch(url, requestOptions);
         let data = await response.json();
         
-        // Filtra brasileiros
         let allMatches = filterBrazilianMatches(data.response);
 
-        // SEPARAÇÃO INTELIGENTE
-        // Ligas Principais: Série A, Copa do Brasil, Libertadores, Sula, Mundial, Seleção
+        // Separação: Ligas Nacionais/Internacionais vs Estaduais
         const priorityTerms = ['Serie A', 'Copa do Brasil', 'Libertadores', 'Sudamericana', 'Recopa', 'World Cup', 'Mundial'];
 
         const mainGames = allMatches.filter(match => {
             const leagueName = match.league.name;
             const isSelecao = match.teams.home.name === "Brazil" || match.teams.away.name === "Brazil";
-            // Verifica se o nome da liga contém algum termo prioritário
             const isPriorityLeague = priorityTerms.some(term => leagueName.includes(term));
             return isSelecao || isPriorityLeague;
         });
 
-        // O resto vai para "Outros Jogos" (Série B, Estaduais, Feminino, Sub-20)
+        // Todos os outros (Estaduais RS, SC, PR, SP, RJ, MG, MT, MS, etc)
         const otherGames = allMatches.filter(match => !mainGames.includes(match));
 
-        // RENDERIZAÇÃO
         if (mainGames.length > 0) {
             renderMatches(mainGames, mainContainer);
         } else {
             mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo "Principal" (Série A/Liberta/Copa) nesta semana.</p></div>`;
         }
 
-        // Configura botão de "Ver Mais"
         if (otherGames.length > 0) {
             renderMatches(otherGames, otherContainer);
-            btnContainer.classList.remove('hidden');
-            // Atualiza texto do botão com quantidade
-            btnContainer.querySelector('button').innerHTML = `<i class="fas fa-chevron-down mr-2"></i> Ver +${otherGames.length} jogos (Outras Ligas)`;
+            if(btnContainer) {
+                btnContainer.classList.remove('hidden');
+                btnContainer.querySelector('button').innerHTML = `<i class="fas fa-chevron-down mr-2"></i> Ver +${otherGames.length} jogos (Estaduais e Outras Ligas)`;
+            }
         } else {
-            btnContainer.classList.add('hidden');
+            if(btnContainer) btnContainer.classList.add('hidden');
         }
         
         if(updateIndicator) {
@@ -110,23 +104,20 @@ async function getMatches() {
 
     } catch (error) {
         console.error('Erro API:', error);
-        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Sistema indisponível no momento.</p></div>`;
+        if(mainContainer) mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Sistema indisponível no momento.</p></div>`;
     }
 }
 
-// Filtra apenas jogos que envolvem Brasil (Ligas ou Times)
 function filterBrazilianMatches(matches) {
     if (!matches) return [];
     return matches.filter(match => {
         const c = match.league.country;
         const h = match.teams.home.name;
         const a = match.teams.away.name;
-        // Lógica: País é Brasil OU Time é "Brazil" (Seleção)
         return c === "Brazil" || h === "Brazil" || a === "Brazil";
     }).sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
 }
 
-// Função de Renderização (Reaproveitada para ambos os containers)
 function renderMatches(matches, container) {
     const html = matches.map(match => {
         const status = translateStatus(match.fixture.status.short);
@@ -155,11 +146,9 @@ function renderMatches(matches, container) {
     container.innerHTML = html;
 }
 
-// Função para mostrar/esconder os jogos secundários
 function toggleOtherGames() {
     const container = document.getElementById('other-matches');
     const btn = document.querySelector('#show-more-container button');
-    
     if (container.classList.contains('hidden')) {
         container.classList.remove('hidden');
         btn.innerHTML = `<i class="fas fa-chevron-up mr-2"></i> Ocultar jogos menores`;
@@ -169,7 +158,6 @@ function toggleOtherGames() {
     }
 }
 
-// --- FILMES ---
 function renderMovies() {
     const container = document.getElementById('movies-container');
     if(!container) return;
@@ -192,6 +180,7 @@ function openTrailer(id) {
     p.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
     m.classList.remove('hidden');
 }
+
 function closeVideoModal() {
     const m = document.getElementById('video-modal');
     const p = document.getElementById('youtube-player');
@@ -199,9 +188,8 @@ function closeVideoModal() {
     m.classList.add('hidden');
 }
 
-// --- UTILITÁRIOS ---
 function translateStatus(s) { const m={'TBD':'A Definir','NS':'Agendado','1H':'1º Tempo','HT':'Intervalo','2H':'2º Tempo','ET':'Prorrogação','P':'Pênaltis','FT':'Fim','LIVE':'Ao Vivo'}; return m[s]||s; }
-function formatDate(d) { return d.toISOString().split('T')[0]; }
+function formatDate(d) { return d.toLocaleDateString('en-CA'); }
 function addDays(d, days) { const r = new Date(d); r.setDate(r.getDate() + days); return r; }
 
 function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent("Olá! 👋 Vim pelo site e gostaria de falar com um atendente.")}`, '_blank'); }
@@ -209,7 +197,6 @@ function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}
 function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`⚽ Olá! Quero assistir ao jogo *${h} x ${a}* no MagiaTV!`)}`, '_blank'); }
 function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`💰 Olá! Tenho interesse no *${p}* (${v}). Como faço para assinar?`)}`, '_blank'); }
 
-// --- INICIALIZAÇÃO ---
 document.addEventListener('DOMContentLoaded', function() {
     getMatches();
     renderMovies();
