@@ -38,7 +38,7 @@ const API_CONFIG = {
 };
 
 // ==========================================
-// LÓGICA DE FUTEBOL (VERSÃO CORRIGIDA API-SPORTS)
+// LÓGICA DE FUTEBOL (VERSÃO BLINDADA)
 // ==========================================
 
 async function getMatches() {
@@ -49,16 +49,17 @@ async function getMatches() {
     
     if(!mainContainer) return; 
 
-    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Conectando ao servidor API-Sports...';
+    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Sincronizando com API-Sports...';
 
+    // Datas formatadas corretamente para evitar erros de fuso
     const todayStr = new Date().toLocaleDateString('en-CA');
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() + 7);
     const nextWeekStr = nextWeek.toLocaleDateString('en-CA');
     
-    // Configuração de Cabeçalhos CORRETA para API-Sports
+    // CABEÇALHO OBRIGATÓRIO PARA CHAVE DIRETA API-SPORTS
     const myHeaders = new Headers();
-    myHeaders.append("x-apisports-key", API_CONFIG.key); // <-- CORREÇÃO: x-apisports-key
+    myHeaders.append("x-apisports-key", API_CONFIG.key); 
     
     let url = `${API_CONFIG.url}/fixtures?from=${todayStr}&to=${nextWeekStr}&timezone=America/Sao_Paulo`;
     
@@ -66,24 +67,21 @@ async function getMatches() {
         let response = await fetch(url, { method: 'GET', headers: myHeaders });
         let data = await response.json();
         
-        // Verifica se há erro de autenticação ou limite
-        if (data.errors && Object.keys(data.errors).length > 0) {
-            const erro = data.errors.requests || data.errors.token || "Erro de Chave";
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-red-50 border border-red-200 rounded-lg"><p class="text-red-700 font-bold">Aviso da API: ${erro}</p></div>`;
+        // Alerta visual caso o limite de 100 requisições acabe
+        if (data.errors && data.errors.requests) {
+            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-yellow-50 border border-yellow-300 rounded-lg"><p class="text-yellow-800 font-bold">Limite de 100 consultas diárias atingido.</p><p class="text-xs text-yellow-600">A agenda voltará a atualizar automaticamente em algumas horas.</p></div>`;
             return;
         }
 
         let allMatches = (data.response || []).filter(match => {
             const league = (match.league.name || "").toLowerCase();
             const country = (match.league.country || "").toLowerCase();
-            return country === "brazil" || league.includes("paulista") || league.includes("carioca") || league.includes("catarinense") || league.includes("copa sao paulo") || league.includes("copinha");
+            // Filtro amplo para garantir que nada do Brasil escape
+            return country === "brazil" || league.includes("paulista") || league.includes("carioca") || league.includes("catarinense") || league.includes("copinha") || league.includes("copa sao paulo");
         });
 
-        // PRIORIDADE NO TOPO: Séries A/B, Libertadores, Estaduais Principais e Copinha
-        const priorityTerms = [
-            'Serie A', 'Serie B', 'Copa do Brasil', 'Libertadores', 'Sudamericana', 
-            'Paulista', 'Carioca', 'Gaucho', 'Catarinense', 'Mineiro', 'Paranaense', 'Copa Sao Paulo'
-        ];
+        // DEFINIÇÃO DO QUE APARECE NO TOPO
+        const priorityTerms = ['Serie A', 'Copa do Brasil', 'Libertadores', 'Paulista', 'Carioca', 'Gaucho', 'Catarinense', 'Mineiro', 'Copinha'];
 
         const mainGames = allMatches.filter(match => {
             const leagueName = match.league.name;
@@ -92,13 +90,13 @@ async function getMatches() {
 
         const otherGames = allMatches.filter(match => !mainGames.includes(match));
 
-        // Renderização Dinâmica
+        // Renderização inteligente para o site nunca ficar vazio
         if (mainGames.length > 0) {
             renderMatches(mainGames, mainContainer);
         } else if (allMatches.length > 0) {
-            renderMatches(allMatches, mainContainer); // Mostra qualquer BR se não houver elite
+            renderMatches(allMatches, mainContainer); // Se não tem elite, mostra os estaduais disponíveis
         } else {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo brasileiro disponível para esta data na API.</p></div>`;
+            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo brasileiro agendado para esta semana.</p></div>`;
         }
 
         if (otherGames.length > 0 && mainGames.length > 0) {
@@ -110,12 +108,12 @@ async function getMatches() {
         
         if(updateIndicator) {
             const time = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Agenda sincronizada às ${time}`;
+            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Agenda MagiaTV atualizada às ${time}`;
         }
 
     } catch (error) {
-        console.error("Erro MagiaTV:", error);
-        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Falha na conexão de rede.</p></div>`;
+        console.error("Erro Crítico:", error);
+        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Erro ao conectar com o satélite de esportes.</p></div>`;
     }
 }
 
@@ -125,7 +123,6 @@ function renderMatches(matches, container) {
         const d = new Date(match.fixture.date);
         const dateDisplay = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} • ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
         
-        // Cores das Bordas por Campeonato
         let borderColor = 'border-gray-100';
         if(match.league.name.includes('Serie A')) borderColor = 'border-green-400';
         if(match.league.name.includes('Libertadores')) borderColor = 'border-yellow-400';
@@ -138,20 +135,16 @@ function renderMatches(matches, container) {
                     <span class="text-xs text-gray-500 text-right"><div class="font-bold">${dateDisplay}</div><div class="text-blue-600 font-medium truncate max-w-[120px]">${match.league.name}</div></span>
                 </div>
                 <div class="flex items-center justify-between px-2">
-                    <div class="flex flex-col items-center w-[30%]"><img src="${match.teams.home.logo}" class="w-12 h-12 object-contain"><p class="text-xs font-bold text-center mt-2">${match.teams.home.name}</p></div>
+                    <div class="flex flex-col items-center w-[35%]"><img src="${match.teams.home.logo}" class="w-12 h-12 object-contain"><p class="text-xs font-bold text-center mt-2">${match.teams.home.name}</p></div>
                     <div class="text-xl font-black text-gray-700">${match.goals.home ?? 0} x ${match.goals.away ?? 0}</div>
-                    <div class="flex flex-col items-center w-[30%]"><img src="${match.teams.away.logo}" class="w-12 h-12 object-contain"><p class="text-xs font-bold text-center mt-2">${match.teams.away.name}</p></div>
+                    <div class="flex flex-col items-center w-[35%]"><img src="${match.teams.away.logo}" class="w-12 h-12 object-contain"><p class="text-xs font-bold text-center mt-2">${match.teams.away.name}</p></div>
                 </div>
                 <button class="w-full mt-4 bg-green-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition" onclick="openWhatsAppGame('${match.teams.home.name}', '${match.teams.away.name}')">Assistir Agora</button>
             </div>`;
     }).join('');
 }
 
-// --- OUTRAS FUNÇÕES ---
-function toggleOtherGames() { 
-    const c = document.getElementById('other-matches'); 
-    c.classList.toggle('hidden'); 
-}
+function toggleOtherGames() { document.getElementById('other-matches').classList.toggle('hidden'); }
 
 function renderMovies() {
     const c = document.getElementById('movies-container');
@@ -160,17 +153,14 @@ function renderMovies() {
         <div class="bg-white rounded-lg shadow-md overflow-hidden group">
             <div class="relative aspect-[2/3] overflow-hidden">
                 <img src="${m.image}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
-                <button onclick="openTrailer('${m.trailerId}')" class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
-                    <i class="fas fa-play text-white text-3xl"></i>
-                </button>
+                <button onclick="openTrailer('${m.trailerId}')" class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300"><i class="fas fa-play text-white text-3xl"></i></button>
             </div>
             <div class="p-4"><h5 class="font-bold text-gray-800">${m.title}</h5><p class="text-xs text-gray-500">${m.category}</p></div>
         </div>`).join('');
 }
 
 function openTrailer(id) { 
-    const p = document.getElementById('youtube-player'); 
-    p.src = `https://www.youtube.com/embed/${id}?autoplay=1`; 
+    document.getElementById('youtube-player').src = `https://www.youtube.com/embed/${id}?autoplay=1`; 
     document.getElementById('video-modal').classList.remove('hidden'); 
 }
 
@@ -179,10 +169,10 @@ function closeVideoModal() {
     document.getElementById('video-modal').classList.add('hidden'); 
 }
 
-function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Olá! Vim pelo site.`, '_blank'); }
-function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero assistir ${h} x ${a}`, '_blank'); }
-function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis`, '_blank'); }
-function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero assinar o ${p}`, '_blank'); }
+function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Olá! Vim pelo site MagiaTV.`, '_blank'); }
+function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero assistir ${h} x ${a} no MagiaTV!`, '_blank'); }
+function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis no MagiaTV!`, '_blank'); }
+function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero assinar o ${p} de ${v}.`, '_blank'); }
 
 document.addEventListener('DOMContentLoaded', () => { 
     getMatches(); 
