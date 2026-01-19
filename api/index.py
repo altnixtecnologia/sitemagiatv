@@ -15,8 +15,12 @@ API_CONFIG = {
 
 @app.route('/api/matches', methods=['GET'])
 def get_unified_matches():
-    # 1. BUSCA NA WYSTER (FONTE PRINCIPAL E ILIMITADA)
+    brazil_time = datetime.utcnow() - timedelta(hours=3)
+    today = brazil_time.strftime('%Y-%m-%d')
+    
+    # 1. BUSCA NA WYSTER (FONTE PRINCIPAL)
     wyster_data = []
+    wyster_error = None
     try:
         res_w = requests.post(
             API_CONFIG['WYSTER_URL'], 
@@ -26,10 +30,12 @@ def get_unified_matches():
         )
         if res_w.status_code == 200:
             wyster_data = res_w.json()
-    except: pass
+        else:
+            wyster_error = f"Erro Wyster: Status {res_w.status_code}"
+    except Exception as e:
+        wyster_error = f"Erro Conexão Wyster: {str(e)}"
 
-    # 2. BUSCA NA API-SPORTS (APENAS PARA LOGOS E DETALHES)
-    today = (datetime.utcnow() - timedelta(hours=3)).strftime('%Y-%m-%d')
+    # 2. BUSCA NA API-SPORTS (APENAS DETALHES)
     sports_data = []
     try:
         res_s = requests.get(
@@ -40,9 +46,10 @@ def get_unified_matches():
         )
         if res_s.status_code == 200:
             sports_data = res_s.json().get('response', [])
-    except: pass
+    except:
+        pass
 
-    # 3. UNIFICAÇÃO DOS DADOS
+    # 3. UNIFICAÇÃO
     final_list = []
     for w_game in wyster_data:
         home_w = w_game.get('time1', '').lower().strip()
@@ -52,13 +59,13 @@ def get_unified_matches():
                 "home": {"name": w_game.get('time1'), "logo": "https://media.api-sports.io/football/teams/default.png"},
                 "away": {"name": w_game.get('time2'), "logo": "https://media.api-sports.io/football/teams/default.png"}
             },
-            "league": {"name": "Programação MagiaTV"},
+            "league": {"name": "MagiaTV Ao Vivo"},
             "fixture": {"status": {"short": "LIVE" if "AO VIVO" in w_game.get('status', '') else "NS"}, "date": today},
             "goals": {"home": 0, "away": 0},
             "canais": w_game.get('canais', [])
         }
 
-        # Tenta encontrar o logo oficial na API-Sports
+        # Tenta enriquecer com logos da API-Sports
         for s in sports_data:
             s_home = s['teams']['home']['name'].lower()
             if home_w[:5] in s_home or s_home in home_w[:5]:
@@ -69,7 +76,11 @@ def get_unified_matches():
         
         final_list.append(game_obj)
 
-    return jsonify({"response": final_list})
+    return jsonify({
+        "response": final_list,
+        "debug_error": wyster_error,
+        "wyster_count": len(wyster_data)
+    })
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
