@@ -2,43 +2,23 @@
 // 1. ÁREA DOS FILMES EM ALTA
 // ==========================================
 const MOVIE_HIGHLIGHTS = [
-    {
-        "title": "Plano em Família 2 (2025)",
-        "category": "Ação, Comédia",
-        "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/aLgvLNWETZ2wtPzU3E7lavEpCJw.jpg",
-        "trailerId": "64-0cFnQ6Ls"
-    },
-    {
-        "title": "Zootopia 2 (2025)",
-        "category": "Animação, Família",
-        "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/fthvYnjERbXt3ILjLjHpPNd5IVJ.jpg",
-        "trailerId": "z-C1VtXQr6o"
-    },
-    {
-        "title": "IT: Bem-Vindo a Derry (2025)",
-        "category": "Drama, Mistério",
-        "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/gMTfrLvrDaD0zrhpLZ7zXIIpKfJ.jpg",
-        "trailerId": "_t4_QgZoyn8"
-    },
-    {
-        "title": "Frankenstein (2025)",
-        "category": "Drama, Terror",
-        "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/cXsMxClCcAF1oMwoXZvbKwWoNeS.jpg",
-        "trailerId": "gRvl9uxmcbA"
-    }
+    { "title": "Plano em Família 2 (2025)", "category": "Ação, Comédia", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/aLgvLNWETZ2wtPzU3E7lavEpCJw.jpg", "trailerId": "64-0cFnQ6Ls" },
+    { "title": "Zootopia 2 (2025)", "category": "Animação, Família", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/fthvYnjERbXt3ILjLjHpPNd5IVJ.jpg", "trailerId": "z-C1VtXQr6o" },
+    { "title": "IT: Bem-Vindo a Derry (2025)", "category": "Drama, Mistério", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/gMTfrLvrDaD0zrhpLZ7zXIIpKfJ.jpg", "trailerId": "_t4_QgZoyn8" },
+    { "title": "Frankenstein (2025)", "category": "Drama, Terror", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/cXsMxClCcAF1oMwoXZvbKwWoNeS.jpg", "trailerId": "gRvl9uxmcbA" }
 ];
 
 // ==========================================
 // 2. CONFIGURAÇÕES GERAIS
 // ==========================================
 const API_CONFIG = {
-    key: '6eeb6ad06d3edbcb77ae34be643302da', 
-    url: 'https://v3.football.api-sports.io',
+    // Agora apontamos para o SEU servidor na Vercel
+    backendUrl: 'https://sitemagiatv.vercel.app/api/matches',
     whatsappNumber: '5548991004780' 
 };
 
 // ==========================================
-// 3. LÓGICA DE FUTEBOL (UNIFICADA)
+// 3. LÓGICA DE FUTEBOL (CONEXÃO VIA VERCEL)
 // ==========================================
 
 async function getMatches() {
@@ -49,29 +29,11 @@ async function getMatches() {
     
     if(!mainContainer) return; 
 
-    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Sincronizando canais e jogos...';
+    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Sincronizando via Vercel...';
 
-    // --- PARTE A: EXTRAÇÃO EXTERNA (WYSTER) ---
-    // Chama a função do arquivo extractor.js se ela existir
-    if (typeof fetchExternalGames === 'function') {
-        const externalData = await fetchExternalGames();
-        if (externalData && externalData.length > 0) {
-            console.log("Dados externos integrados:", externalData.length);
-            // Aqui você pode adicionar lógica para exibir esses dados específicos
-        }
-    }
-
-    // --- PARTE B: API-SPORTS ---
-    const todayStr = new Date().toLocaleDateString('en-CA');
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    const nextWeekStr = nextWeek.toLocaleDateString('en-CA');
-    
-    const headers = new Headers();
-    headers.append("x-apisports-key", API_CONFIG.key);
-    
     try {
-        let response = await fetch(`${API_CONFIG.url}/fixtures?from=${todayStr}&to=${nextWeekStr}&timezone=America/Sao_Paulo`, { method: 'GET', headers: headers });
+        // Chamada simplificada: o Python na Vercel já cuida da chave e das datas
+        let response = await fetch(API_CONFIG.backendUrl);
         let data = await response.json();
         
         if (data.errors && data.errors.requests) {
@@ -94,7 +56,7 @@ async function getMatches() {
         } else if (allMatches.length > 0) {
             renderMatches(allMatches, mainContainer);
         } else {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo brasileiro agendado para esta semana.</p></div>`;
+            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo brasileiro localizado para hoje.</p></div>`;
         }
 
         if (otherGames.length > 0 && mainGames.length > 0) {
@@ -106,31 +68,28 @@ async function getMatches() {
         
         if(updateIndicator) {
             const time = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Agenda MagiaTV atualizada às ${time}`;
+            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Agenda MagiaTV sincronizada às ${time}`;
         }
 
     } catch (error) {
-        console.error("Erro Crítico:", error);
-        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Erro ao carregar a programação.</p></div>`;
+        console.error("Erro ao conectar com a Vercel:", error);
+        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Erro ao carregar a programação da nuvem.</p></div>`;
     }
 }
 
 function renderMatches(matches, container) {
     container.innerHTML = matches.map(match => {
-        const status = translateStatus(match.fixture.status.short);
         const isLive = ['1H', '2H', 'HT', 'LIVE'].includes(match.fixture.status.short);
         const d = new Date(match.fixture.date);
         const dateDisplay = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} • ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
         
         let borderColor = 'border-gray-100';
-        if(match.league.name.includes('Serie A')) borderColor = 'border-green-400';
-        if(match.league.name.includes('Libertadores')) borderColor = 'border-yellow-400';
         if(match.league.name.includes('Catarinense')) borderColor = 'border-blue-400';
 
         return `
             <div class="bg-white rounded-lg shadow-md card-hover p-4 border-l-4 ${borderColor} relative">
                 <div class="flex items-center justify-between mb-4 border-b pb-2">
-                    <span class="${isLive ? 'bg-red-100 text-red-800 animate-pulse' : 'bg-gray-100 text-gray-600'} px-2 py-1 rounded text-xs font-bold uppercase">${isLive ? 'AO VIVO' : status}</span>
+                    <span class="${isLive ? 'bg-red-100 text-red-800 animate-pulse' : 'bg-gray-100 text-gray-600'} px-2 py-1 rounded text-xs font-bold uppercase">${isLive ? 'AO VIVO' : 'Agendado'}</span>
                     <span class="text-xs text-gray-500 text-right"><div class="font-bold">${dateDisplay}</div><div class="truncate max-w-[120px] text-blue-600 font-medium">${match.league.name}</div></span>
                 </div>
                 <div class="flex items-center justify-between px-2">
