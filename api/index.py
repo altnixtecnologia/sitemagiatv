@@ -4,10 +4,8 @@ import requests
 from datetime import datetime
 
 app = Flask(__name__)
-# Permite que o seu site no GitHub Pages acesse os dados
 CORS(app)
 
-# Configurações da MagiaTV
 API_CONFIG = {
     'KEY': '6eeb6ad06d3edbcb77ae34be643302da',
     'FOOTBALL_URL': 'https://v3.football.api-sports.io',
@@ -19,7 +17,7 @@ API_CONFIG = {
 def get_unified_matches():
     today = datetime.now().strftime('%Y-%m-%d')
     
-    # 1. Busca jogos na API-Sports (Filtro por data de hoje)
+    # 1. Busca jogos na API-Sports
     headers = {'x-apisports-key': API_CONFIG['KEY']}
     try:
         res_sports = requests.get(
@@ -29,8 +27,8 @@ def get_unified_matches():
             timeout=10
         )
         sports_data = res_sports.json().get('response', [])
-    except Exception:
-        sports_data = []
+    except Exception as e:
+        return jsonify({"error": f"Erro API-Sports: {str(e)}"}), 500
 
     # 2. Busca canais no Wyster Jogos
     try:
@@ -44,21 +42,21 @@ def get_unified_matches():
     except Exception:
         wyster_data = []
 
-    # 3. Lógica de Cruzamento: Adiciona canais aos jogos da API-Sports
+    # 3. Cruzamento Simplificado (Resolve Criciúma vs Criciuma)
     for match in sports_data:
-        # Normaliza nomes para comparação (Criciúma -> criciuma)
-        home_name = match['teams']['home']['name'].lower()
+        # Pega o nome do time da casa e remove espaços extras
+        home_name = match['teams']['home']['name'].lower().strip()
         match['canais'] = [] 
         
         for w_game in wyster_data:
-            w_home = w_game.get('time1', '').lower()
-            # Verifica se o nome do time da casa existe em ambos os sistemas
-            if w_home and (w_home in home_name or home_name in w_home):
+            w_home = w_game.get('time1', '').lower().strip()
+            
+            # Se um nome contém o outro (ex: "Criciuma" está em "Criciúma E.C.")
+            if w_home and (w_home[:5] in home_name or home_name[:5] in w_home):
                 match['canais'] = w_game.get('canais', [])
                 break
 
     return jsonify({"response": sports_data})
 
-# Necessário para rodar localmente no VS Code se precisar
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
