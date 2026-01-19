@@ -37,13 +37,14 @@ const API_CONFIG = {
     whatsappNumber: '5548991004780' 
 };
 
-// ==========================================
-// LÓGICA DE FUTEBOL (PRINCIPAIS vs OUTROS)
-// ==========================================
 const myHeaders = new Headers();
 myHeaders.append("x-rapidapi-key", API_CONFIG.key);
 myHeaders.append("x-rapidapi-host", "v3.football.api-sports.io");
 const requestOptions = { method: 'GET', headers: myHeaders, redirect: 'follow' };
+
+// ==========================================
+// LÓGICA DE FUTEBOL (SISTEMA DE FILTRAGEM BR)
+// ==========================================
 
 async function getMatches() {
     const updateIndicator = document.getElementById('update-indicator');
@@ -53,22 +54,25 @@ async function getMatches() {
     
     if(!mainContainer) return; 
 
-    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Organizando a agenda da semana...';
+    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Buscando jogos no Brasil...';
 
     const today = new Date();
     const todayStr = formatDate(today);
     const nextWeek = addDays(today, 7);
     const nextWeekStr = formatDate(nextWeek);
     
+    // Busca ampla para cobrir todos os jogos da semana
     let url = `${API_CONFIG.url}/fixtures?from=${todayStr}&to=${nextWeekStr}&timezone=America/Sao_Paulo`;
     
     try {
         let response = await fetch(url, requestOptions);
         let data = await response.json();
         
+        if (!data.response) throw new Error("Resposta inválida da API");
+
         let allMatches = filterBrazilianMatches(data.response);
 
-        // SEPARAÇÃO INTELIGENTE: Ligas de Elite e Estaduais Principais
+        // LISTA DE PRIORIDADE (O que aparece no topo)
         const priorityTerms = [
             'Serie A', 'Copa do Brasil', 'Libertadores', 'Sudamericana', 'Recopa', 'World Cup', 'Mundial',
             'Paulista', 'Carioca', 'Gaucho', 'Catarinense', 'Mineiro', 'Paranaense', 'Matogrossense', 'Sul-Matogrossense'
@@ -77,24 +81,25 @@ async function getMatches() {
         const mainGames = allMatches.filter(match => {
             const leagueName = match.league.name;
             const isSelecao = match.teams.home.name === "Brazil" || match.teams.away.name === "Brazil";
-            const isPriorityLeague = priorityTerms.some(term => leagueName.includes(term));
-            return isSelecao || isPriorityLeague;
+            const isPriority = priorityTerms.some(term => leagueName.includes(term));
+            return isSelecao || isPriority;
         });
 
-        // O resto vai para "Outras Ligas"
         const otherGames = allMatches.filter(match => !mainGames.includes(match));
 
+        // Renderiza Principais
         if (mainGames.length > 0) {
             renderMatches(mainGames, mainContainer);
         } else {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo "Principal" (Nacionais ou Estaduais de Elite) nesta semana.</p></div>`;
+            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo principal agendado para os próximos 7 dias.</p></div>`;
         }
 
+        // Renderiza Outros (Estaduais menores, Sub-20, etc)
         if (otherGames.length > 0) {
             renderMatches(otherGames, otherContainer);
             if(btnContainer) {
                 btnContainer.classList.remove('hidden');
-                btnContainer.querySelector('button').innerHTML = `<i class="fas fa-chevron-down mr-2"></i> Ver +${otherGames.length} jogos (Ligas Secundárias)`;
+                btnContainer.querySelector('button').innerHTML = `<i class="fas fa-chevron-down mr-2"></i> Ver +${otherGames.length} outros jogos`;
             }
         } else {
             if(btnContainer) btnContainer.classList.add('hidden');
@@ -106,23 +111,32 @@ async function getMatches() {
         }
 
     } catch (error) {
-        console.error('Erro API:', error);
-        if(mainContainer) mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Sistema indisponível no momento.</p></div>`;
+        console.error('Erro na MagiaTV:', error);
+        if(mainContainer) mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Ocorreu um erro ao carregar os jogos. Tente novamente mais tarde.</p></div>`;
     }
 }
 
 function filterBrazilianMatches(matches) {
     if (!matches) return [];
+    
+    const estaduais = ['paulista', 'carioca', 'gaucho', 'catarinense', 'mineiro', 'paranaense', 'matogrossense', 'sul-matogrossense'];
+
     return matches.filter(match => {
-        const c = match.league.country;
-        const h = match.teams.home.name;
-        const a = match.teams.away.name;
-        return c === "Brazil" || h === "Brazil" || a === "Brazil";
+        const country = (match.league.country || "").toLowerCase();
+        const league = (match.league.name || "").toLowerCase();
+        const teamHome = (match.teams.home.name || "");
+        const teamAway = (match.teams.away.name || "");
+
+        // Filtro Robusto: Verifica país, nome da liga ou se é a Seleção Brasileira
+        const isBrazil = country === "brazil" || teamHome === "Brazil" || teamAway === "Brazil";
+        const isEstadual = estaduais.some(e => league.includes(e));
+
+        return isBrazil || isEstadual;
     }).sort((a, b) => new Date(a.fixture.date) - new Date(b.fixture.date));
 }
 
 function renderMatches(matches, container) {
-    const html = matches.map(match => {
+    container.innerHTML = matches.map(match => {
         const status = translateStatus(match.fixture.status.short);
         const isLive = ['1H', '2H', 'HT', 'LIVE'].includes(match.fixture.status.short);
         const d = new Date(match.fixture.date);
@@ -146,8 +160,9 @@ function renderMatches(matches, container) {
                 <button class="w-full mt-4 bg-green-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition flex items-center justify-center" onclick="openWhatsAppGame('${match.teams.home.name}', '${match.teams.away.name}')"><i class="fab fa-whatsapp mr-2"></i>Assistir</button>
             </div>`;
     }).join('');
-    container.innerHTML = html;
 }
+
+// --- UTILITÁRIOS ---
 
 function toggleOtherGames() {
     const container = document.getElementById('other-matches');
@@ -157,14 +172,14 @@ function toggleOtherGames() {
         btn.innerHTML = `<i class="fas fa-chevron-up mr-2"></i> Ocultar jogos menores`;
     } else {
         container.classList.add('hidden');
-        btn.innerHTML = `<i class="fas fa-chevron-down mr-2"></i> Ver jogos de outras ligas`;
+        btn.innerHTML = `<i class="fas fa-chevron-down mr-2"></i> Ver outros jogos`;
     }
 }
 
 function renderMovies() {
     const container = document.getElementById('movies-container');
     if(!container) return;
-    const html = MOVIE_HIGHLIGHTS.map(movie => `
+    container.innerHTML = MOVIE_HIGHLIGHTS.map(movie => `
         <div class="bg-white rounded-lg shadow-md card-hover overflow-hidden group">
             <div class="relative aspect-[2/3] overflow-hidden">
                 <img src="${movie.image}" alt="${movie.title}" class="w-full h-full object-cover transition duration-300 group-hover:scale-110">
@@ -174,7 +189,6 @@ function renderMovies() {
             </div>
             <div class="p-4"><h5 class="font-bold text-gray-800 text-lg mb-1">${movie.title}</h5><p class="text-sm text-gray-500">${movie.category}</p></div>
         </div>`).join('');
-    container.innerHTML = html;
 }
 
 function openTrailer(id) {
@@ -192,7 +206,7 @@ function closeVideoModal() {
 }
 
 function translateStatus(s) { const m={'TBD':'A Definir','NS':'Agendado','1H':'1º Tempo','HT':'Intervalo','2H':'2º Tempo','ET':'Prorrogação','P':'Pênaltis','FT':'Fim','LIVE':'Ao Vivo'}; return m[s]||s; }
-function formatDate(d) { return d.toLocaleDateString('en-CA'); } // Formato YYYY-MM-DD local
+function formatDate(d) { return d.toLocaleDateString('en-CA'); } 
 function addDays(d, days) { const r = new Date(d); r.setDate(r.getDate() + days); return r; }
 
 function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent("Olá! 👋 Vim pelo site e gostaria de falar com um atendente.")}`, '_blank'); }
