@@ -1,5 +1,5 @@
 // ==========================================
-// 1. ÁREA DOS FILMES EM ALTA
+// 1. FILMES EM ALTA
 // ==========================================
 const MOVIE_HIGHLIGHTS = [
     { "title": "Plano em Família 2 (2025)", "category": "Ação, Comédia", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/aLgvLNWETZ2wtPzU3E7lavEpCJw.jpg", "trailerId": "64-0cFnQ6Ls" },
@@ -9,7 +9,7 @@ const MOVIE_HIGHLIGHTS = [
 ];
 
 // ==========================================
-// 2. CONFIGURAÇÕES GERAIS
+// 2. CONFIGURAÇÕES
 // ==========================================
 const API_CONFIG = {
     backendUrl: 'https://sitemagiatv.vercel.app/api/matches',
@@ -17,7 +17,7 @@ const API_CONFIG = {
 };
 
 // ==========================================
-// 3. LÓGICA DE FUTEBOL (VERSÃO SEGURA)
+// 3. LÓGICA DE FUTEBOL
 // ==========================================
 
 async function getMatches() {
@@ -25,14 +25,15 @@ async function getMatches() {
     const mainContainer = document.getElementById('main-matches');
     
     if(!mainContainer) return; 
-    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Carregando jogos...';
+    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Buscando jogos...';
 
     try {
         const response = await fetch(API_CONFIG.backendUrl);
         const data = await response.json();
-        
-        // Filtro amplo para garantir que o Catarinense apareça
-        let allMatches = (data.response || []).filter(match => {
+        const responseList = data.response || [];
+
+        // Filtro para Brasil e Estaduais (Catarinense, etc)
+        let allMatches = responseList.filter(match => {
             const league = (match.league.name || "").toLowerCase();
             const country = (match.league.country || "").toLowerCase();
             return country === "brazil" || league.includes("catarinense") || league.includes("copinha") || league.includes("paulista") || league.includes("carioca");
@@ -50,8 +51,8 @@ async function getMatches() {
         }
 
     } catch (error) {
-        console.error("Erro no fetch:", error);
-        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Erro ao conectar com o servidor da MagiaTV.</p></div>`;
+        console.error("Erro:", error);
+        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">O servidor da MagiaTV está temporariamente offline.</p></div>`;
     }
 }
 
@@ -61,17 +62,15 @@ function renderMatches(matches, container) {
         const d = new Date(match.fixture.date);
         const dateDisplay = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} • ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
         
-        // Destaque para o Catarinense
-        let borderColor = match.league.name.includes('Catarinense') ? 'border-blue-500 shadow-lg' : 'border-gray-100';
+        let borderColor = match.league.name.includes('Catarinense') ? 'border-blue-500 shadow-md' : 'border-gray-100';
 
-        // Canais vindos do backend
         let channelsHtml = '';
         if (match.canais && match.canais.length > 0) {
             channelsHtml = `
                 <div class="mt-3 pt-2 border-t border-gray-100 flex flex-wrap justify-center gap-2">
                     ${match.canais.map(c => `
                         <div class="flex flex-col items-center">
-                            <img src="${c.img_url}" class="h-5 w-auto object-contain mb-1" title="${c.nome}">
+                            <img src="${c.img_url}" class="h-5 w-auto object-contain mb-1">
                             <span class="text-[7px] text-gray-400 font-bold uppercase">${c.nome}</span>
                         </div>
                     `).join('')}
