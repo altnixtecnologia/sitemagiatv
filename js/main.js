@@ -1,11 +1,8 @@
-// ==========================================
-// 1. ÁREA DOS FILMES EM ALTA
-// ==========================================
 const MOVIE_HIGHLIGHTS = [
-    { "title": "Plano em Família 2 (2025)", "category": "Ação", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/aLgvLNWETZ2wtPzU3E7lavEpCJw.jpg", "trailerId": "64-0cFnQ6Ls" },
-    { "title": "Zootopia 2 (2025)", "category": "Animação", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/fthvYnjERbXt3ILjLjHpPNd5IVJ.jpg", "trailerId": "z-C1VtXQr6o" },
-    { "title": "IT: Bem-Vindo a Derry", "category": "Terror", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/gMTfrLvrDaD0zrhpLZ7zXIIpKfJ.jpg", "trailerId": "_t4_QgZoyn8" },
-    { "title": "Frankenstein (2025)", "category": "Terror", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/cXsMxClCcAF1oMwoXZvbKwWoNeS.jpg", "trailerId": "gRvl9uxmcbA" }
+    { "title": "Plano em Família 2", "category": "Ação", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/aLgvLNWETZ2wtPzU3E7lavEpCJw.jpg", "trailerId": "64-0cFnQ6Ls" },
+    { "title": "Zootopia 2", "category": "Animação", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/fthvYnjERbXt3ILjLjHpPNd5IVJ.jpg", "trailerId": "z-C1VtXQr6o" },
+    { "title": "IT: Derry", "category": "Terror", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/gMTfrLvrDaD0zrhpLZ7zXIIpKfJ.jpg", "trailerId": "_t4_QgZoyn8" },
+    { "title": "Frankenstein", "category": "Terror", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/cXsMxClCcAF1oMwoXZvbKwWoNeS.jpg", "trailerId": "gRvl9uxmcbA" }
 ];
 
 const API_CONFIG = {
@@ -13,9 +10,6 @@ const API_CONFIG = {
     whatsappNumber: '5548991004780' 
 };
 
-// ==========================================
-// 2. LÓGICA DE FUTEBOL
-// ==========================================
 async function getMatches() {
     const mainContainer = document.getElementById('main-matches');
     const updateIndicator = document.getElementById('update-indicator');
@@ -24,36 +18,29 @@ async function getMatches() {
     try {
         const response = await fetch(`${API_CONFIG.backendUrl}?t=${Date.now()}`);
         const data = await response.json();
-        const responseList = data.response || [];
-
-        if (responseList.length > 0) {
-            renderMatches(responseList, mainContainer);
-        } else {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Nenhuma transmissão ao vivo localizada.</p></div>`;
-        }
-
+        renderMatches(data.response || [], mainContainer);
         if(updateIndicator) {
             const time = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>MagiaTV sincronizada às ${time}`;
+            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Grade Sincronizada às ${time}`;
         }
     } catch (e) {
-        mainContainer.innerHTML = `<p class="text-center text-red-500 font-bold">Erro de conexão com o servidor.</p>`;
+        mainContainer.innerHTML = `<p class="text-center text-red-500">Erro de conexão.</p>`;
     }
 }
 
 function renderMatches(matches, container) {
     container.innerHTML = matches.map(match => {
-        const isLive = ['1H', '2H', 'HT', 'LIVE'].includes(match.fixture.status.short);
+        const isLive = match.fixture.status.short === 'LIVE';
         let channelsHtml = (match.canais || []).map(c => `
             <div class="flex flex-col items-center">
-                <img src="${c.img_url}" class="h-6 w-auto object-contain" onerror="this.src='https://via.placeholder.com/30?text=TV'">
+                <img src="${c.img_url}" class="h-6 w-auto object-contain">
                 <span class="text-[7px] text-gray-400 font-bold uppercase mt-1">${c.nome}</span>
             </div>`).join('');
 
         return `
             <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500 card-hover">
                 <div class="flex items-center justify-between mb-4 border-b pb-2">
-                    <span class="${isLive ? 'bg-red-100 text-red-800 animate-pulse' : 'bg-gray-100 text-gray-600'} px-2 py-1 rounded text-xs font-bold uppercase">${isLive ? 'AO VIVO' : 'Grade'}</span>
+                    <span class="${isLive ? 'bg-red-100 text-red-800 animate-pulse' : 'bg-gray-100 text-gray-600'} px-2 py-1 rounded text-xs font-bold uppercase">${isLive ? 'AO VIVO' : 'Canais'}</span>
                     <span class="text-xs text-blue-600 font-bold truncate max-w-[150px]">${match.league.name}</span>
                 </div>
                 <div class="flex items-center justify-between px-2">
@@ -67,9 +54,6 @@ function renderMatches(matches, container) {
     }).join('');
 }
 
-// ==========================================
-// 3. UTILITÁRIOS E BOTÕES
-// ==========================================
 function renderMovies() {
     const container = document.getElementById('movies-container');
     if(!container) return;
@@ -85,17 +69,9 @@ function renderMovies() {
 
 function openTrailer(id) { document.getElementById('youtube-player').src = `https://www.youtube.com/embed/${id}?autoplay=1`; document.getElementById('video-modal').classList.remove('hidden'); }
 function closeVideoModal() { document.getElementById('youtube-player').src = ''; document.getElementById('video-modal').classList.add('hidden'); }
+function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Olá!`, '_blank'); }
+function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assistir ${h} x ${a}!`)}`, '_blank'); }
+function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis!`, '_blank'); }
+function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero o plano ${p} de ${v}`)}`, '_blank'); }
 
-// Funções de WhatsApp e Pedidos de Teste
-function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Olá! Vim pelo site.`, '_blank'); }
-function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assistir ${h} x ${a} na MagiaTV!`)}`, '_blank'); }
-function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis na MagiaTV!`, '_blank'); }
-function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assinar o ${p} de ${v}.`)}`, '_blank'); }
-
-document.addEventListener('DOMContentLoaded', () => { 
-    getMatches(); 
-    renderMovies(); 
-    const b = document.getElementById('menu-btn');
-    if(b) b.onclick = () => document.getElementById('mobile-menu').classList.toggle('hidden');
-    document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeVideoModal(); });
-});
+document.addEventListener('DOMContentLoaded', () => { getMatches(); renderMovies(); if(document.getElementById('menu-btn')) document.getElementById('menu-btn').onclick = () => document.getElementById('mobile-menu').classList.toggle('hidden'); });
