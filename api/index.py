@@ -16,6 +16,7 @@ API_CONFIG = {
 
 @app.route('/api/matches', methods=['GET'])
 def get_unified_matches():
+    # Pega a data de hoje para a API-Sports
     today = datetime.now().strftime('%Y-%m-%d')
     
     # 1. Busca jogos na API-Sports
@@ -26,36 +27,36 @@ def get_unified_matches():
             f"{API_CONFIG['FOOTBALL_URL']}/fixtures", 
             params={'date': today, 'timezone': 'America/Sao_Paulo'}, 
             headers=headers,
-            timeout=8
+            timeout=5 # Timeout curto para não travar a Vercel
         )
         if res_sports.status_code == 200:
             sports_data = res_sports.json().get('response', [])
     except Exception as e:
-        print(f"Erro Sports: {e}")
+        print(f"Erro ao buscar na API-Sports: {e}")
 
-    # 2. Busca canais no Wyster Jogos
+    # 2. Busca canais no Wyster (Opcional - se falhar, os jogos seguem aparecendo)
     wyster_data = []
     try:
         res_wyster = requests.post(
             API_CONFIG['WYSTER_URL'], 
             data={'token': API_CONFIG['WYSTER_TOKEN']}, 
             headers={'X-Requested-With': 'XMLHttpRequest'},
-            timeout=5
+            timeout=4
         )
         if res_wyster.status_code == 200:
             wyster_data = res_wyster.json()
-    except Exception as e:
-        print(f"Erro Wyster: {e}")
+    except Exception:
+        pass # Silencia o erro para não prejudicar a exibição dos jogos
 
-    # 3. Lógica de Cruzamento Defensiva
+    # 3. Lógica de Cruzamento Flexível
     for match in sports_data:
-        match['canais'] = [] # Garante que o campo existe para não dar erro no JS
-        home_team_api = match['teams']['home']['name'].lower()
+        match['canais'] = [] # Garante que o campo exista para o JavaScript
+        home_api = match['teams']['home']['name'].lower()
         
         for w_game in wyster_data:
-            home_team_wyster = w_game.get('time1', '').lower()
-            # Se os nomes forem parecidos (ex: contém "criciuma"), anexa os canais
-            if home_team_wyster and (home_team_wyster in home_team_api or home_team_api in home_team_wyster):
+            home_wyster = w_game.get('time1', '').lower()
+            # Se um nome estiver contido no outro (ex: "criciuma" em "criciúma e.c.")
+            if home_wyster and (home_wyster in home_api or home_api in home_wyster):
                 match['canais'] = w_game.get('canais', [])
                 break
 
