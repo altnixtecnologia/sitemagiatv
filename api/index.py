@@ -15,28 +15,35 @@ API_CONFIG = {
 
 @app.route('/api/matches', methods=['GET'])
 def get_unified_matches():
-    # Cabeçalhos de simulação de navegador para evitar o Erro 403
-    headers_wyster = {
+    # Cabeçalhos ultra-completos para evitar Erro 403
+    session = requests.Session()
+    headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': 'https://wysterjogos.nptv2.com/',
         'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Origin': 'https://wysterjogos.nptv2.com',
+        'Referer': 'https://wysterjogos.nptv2.com/',
         'X-Requested-With': 'XMLHttpRequest'
     }
 
-    # 1. BUSCA NA WYSTER (FONTE PRINCIPAL)
+    # 1. BUSCA NA WYSTER
     wyster_data = []
+    debug_msg = "Wyster OK"
     try:
-        res_w = requests.post(
+        res_w = session.post(
             API_CONFIG['WYSTER_URL'], 
             data={'token': API_CONFIG['WYSTER_TOKEN']}, 
-            headers=headers_wyster,
+            headers=headers,
             timeout=10
         )
         if res_w.status_code == 200:
             wyster_data = res_w.json()
-    except: pass
+        else:
+            debug_msg = f"Erro Wyster: Status {res_w.status_code}"
+    except Exception as e:
+        debug_msg = f"Erro Conexão: {str(e)}"
 
-    # 2. BUSCA NA API-SPORTS (PARA ENRIQUECIMENTO DE LOGOS)
+    # 2. BUSCA NA API-SPORTS (LOGOS)
     today = (datetime.utcnow() - timedelta(hours=3)).strftime('%Y-%m-%d')
     sports_data = []
     try:
@@ -46,15 +53,13 @@ def get_unified_matches():
             headers={'x-apisports-key': API_CONFIG['KEY']},
             timeout=5
         )
-        if res_s.status_code == 200:
-            sports_data = res_s.json().get('response', [])
+        sports_data = res_s.json().get('response', [])
     except: pass
 
-    # 3. UNIFICAÇÃO DOS DADOS
+    # 3. UNIFICAÇÃO
     final_list = []
     for w_game in wyster_data:
         home_w = w_game.get('time1', '').lower().strip()
-        
         game_obj = {
             "teams": {
                 "home": {"name": w_game.get('time1'), "logo": "https://media.api-sports.io/football/teams/default.png"},
@@ -65,19 +70,24 @@ def get_unified_matches():
             "goals": {"home": 0, "away": 0},
             "canais": w_game.get('canais', [])
         }
-
-        # Cruzamento de logos
         for s in sports_data:
-            s_home = s['teams']['home']['name'].lower()
-            if home_w[:5] in s_home or s_home in home_w[:5]:
+            if home_w[:5] in s['teams']['home']['name'].lower():
                 game_obj["teams"]["home"]["logo"] = s['teams']['home']['logo']
                 game_obj["teams"]["away"]["logo"] = s['teams']['away']['logo']
-                game_obj["league"]["name"] = s['league']['name']
                 break
-        
         final_list.append(game_obj)
 
-    return jsonify({"response": final_list})
+    # JOGO DE TESTE (Apenas se a lista estiver vazia para provar que o site funciona)
+    if not final_list:
+        final_list.append({
+            "teams": {"home": {"name": "Aguardando Grade", "logo": ""}, "away": {"name": "MagiaTV", "logo": ""}},
+            "league": {"name": "Sincronizando..."},
+            "fixture": {"status": {"short": "NS"}},
+            "goals": {"home": 0, "away": 0},
+            "canais": [{"nome": "Suporte MagiaTV", "img_url": "https://cdn-icons-png.flaticon.com/512/124/124034.png"}]
+        })
+
+    return jsonify({"response": final_list, "debug": debug_msg})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
