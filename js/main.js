@@ -8,74 +8,57 @@ const MOVIE_HIGHLIGHTS = [
     { "title": "Frankenstein (2025)", "category": "Terror", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/cXsMxClCcAF1oMwoXZvbKwWoNeS.jpg", "trailerId": "gRvl9uxmcbA" }
 ];
 
-// ==========================================
-// 2. CONFIGURAÇÕES
-// ==========================================
 const API_CONFIG = {
     backendUrl: 'https://sitemagiatv.vercel.app/api/matches',
     whatsappNumber: '5548991004780' 
 };
 
-// ==========================================
-// 3. LÓGICA DE FUTEBOL
-// ==========================================
-
 async function getMatches() {
     const updateIndicator = document.getElementById('update-indicator');
     const mainContainer = document.getElementById('main-matches');
-    
     if(!mainContainer) return; 
-    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Sincronizando...';
+
+    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Buscando canais MagiaTV...';
 
     try {
         const response = await fetch(API_CONFIG.backendUrl);
         const data = await response.json();
-
-        // Verifica erro de limite da API-Sports
-        if (data.errors && Object.keys(data.errors).length > 0) {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-yellow-50 text-yellow-700 rounded-lg">Limite de buscas diárias atingido (API Free).</div>`;
-            return;
-        }
-
         const responseList = data.response || [];
 
-        // Filtro para Brasil e Estaduais
-        let allMatches = responseList.filter(match => {
-            const league = (match.league.name || "").toLowerCase();
-            const country = (match.league.country || "").toLowerCase();
-            return country === "brazil" || league.includes("catarinense") || league.includes("copinha") || league.includes("paulista") || league.includes("carioca");
-        });
-
-        if (allMatches.length > 0) {
-            renderMatches(allMatches, mainContainer);
+        if (responseList.length > 0) {
+            renderMatches(responseList, mainContainer);
         } else {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo localizado no momento para o dia de hoje.</p></div>`;
+            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhuma transmissão ao vivo no momento.</p></div>`;
         }
 
         if(updateIndicator) {
             const time = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>MagiaTV atualizada às ${time}`;
+            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Grade MagiaTV atualizada às ${time}`;
         }
 
     } catch (error) {
-        console.error("Erro:", error);
-        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Servidor em manutenção.</p></div>`;
+        console.error("Erro no Backend:", error);
+        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-red-500 font-bold">Servidor em manutenção.</p></div>`;
     }
 }
 
 function renderMatches(matches, container) {
     container.innerHTML = matches.map(match => {
         const isLive = ['1H', '2H', 'HT', 'LIVE'].includes(match.fixture.status.short);
-        const d = new Date(match.fixture.date);
-        const dateDisplay = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} • ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
         
         let borderColor = match.league.name.includes('Catarinense') ? 'border-blue-500 shadow-lg' : 'border-gray-100';
 
+        // Lista de Canais do Wyster
         let channelsHtml = '';
         if (match.canais && match.canais.length > 0) {
             channelsHtml = `
-                <div class="mt-3 pt-2 border-t border-gray-100 flex flex-wrap justify-center gap-2">
-                    ${match.canais.map(c => `<img src="${c.img_url}" class="h-5 w-auto object-contain" title="${c.nome}">`).join('')}
+                <div class="mt-3 pt-2 border-t border-gray-100 flex flex-wrap justify-center gap-3">
+                    ${match.canais.map(c => `
+                        <div class="flex flex-col items-center">
+                            <img src="${c.img_url}" class="h-6 w-auto object-contain" title="${c.nome}" onerror="this.src='https://via.placeholder.com/30?text=TV'">
+                            <span class="text-[7px] text-gray-400 font-bold uppercase mt-1">${c.nome}</span>
+                        </div>
+                    `).join('')}
                 </div>`;
         }
 
@@ -83,12 +66,18 @@ function renderMatches(matches, container) {
             <div class="bg-white rounded-lg shadow-md p-4 border-l-4 ${borderColor} relative card-hover">
                 <div class="flex items-center justify-between mb-4 border-b pb-2">
                     <span class="${isLive ? 'bg-red-100 text-red-800 animate-pulse' : 'bg-gray-100 text-gray-600'} px-2 py-1 rounded text-xs font-bold uppercase">${isLive ? 'AO VIVO' : 'Agendado'}</span>
-                    <span class="text-xs text-gray-500 text-right"><div class="font-bold">${dateDisplay}</div><div class="text-blue-600 font-medium truncate max-w-[120px]">${match.league.name}</div></span>
+                    <span class="text-xs text-blue-600 font-bold truncate max-w-[150px]">${match.league.name}</span>
                 </div>
                 <div class="flex items-center justify-between px-2">
-                    <div class="flex flex-col items-center w-[35%]"><img src="${match.teams.home.logo}" class="w-10 h-10 object-contain"><p class="text-xs font-bold text-center mt-2">${match.teams.home.name}</p></div>
+                    <div class="flex flex-col items-center w-[35%]">
+                        <img src="${match.teams.home.logo}" class="w-10 h-10 object-contain" onerror="this.src='https://via.placeholder.com/40?text=HOME'">
+                        <p class="text-xs font-bold text-center mt-2">${match.teams.home.name}</p>
+                    </div>
                     <div class="text-lg font-black text-gray-700">${match.goals.home ?? 0} x ${match.goals.away ?? 0}</div>
-                    <div class="flex flex-col items-center w-[35%]"><img src="${match.teams.away.logo}" class="w-10 h-10 object-contain"><p class="text-xs font-bold text-center mt-2">${match.teams.away.name}</p></div>
+                    <div class="flex flex-col items-center w-[35%]">
+                        <img src="${match.teams.away.logo}" class="w-10 h-10 object-contain" onerror="this.src='https://via.placeholder.com/40?text=AWAY'">
+                        <p class="text-xs font-bold text-center mt-2">${match.teams.away.name}</p>
+                    </div>
                 </div>
                 ${channelsHtml}
                 <button class="w-full mt-4 bg-green-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition" onclick="openWhatsAppGame('${match.teams.home.name}', '${match.teams.away.name}')">Assistir Agora</button>
