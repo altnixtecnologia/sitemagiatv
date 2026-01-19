@@ -25,27 +25,26 @@ async function getMatches() {
     const mainContainer = document.getElementById('main-matches');
     
     if(!mainContainer) return; 
-    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Sincronizando canais e jogos...';
+    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Sincronizando com a Nuvem...';
 
     try {
-        let response = await fetch(API_CONFIG.backendUrl);
-        let data = await response.json();
+        const response = await fetch(API_CONFIG.backendUrl);
+        if (!response.ok) throw new Error('Falha na resposta do servidor');
         
-        let allMatches = (data.response || []).filter(match => {
+        const data = await response.json();
+        const responseList = data.response || [];
+        
+        // Filtra para mostrar apenas o que é do Brasil ou Estaduais
+        let allMatches = responseList.filter(match => {
             const league = (match.league.name || "").toLowerCase();
             const country = (match.league.country || "").toLowerCase();
             return country === "brazil" || league.includes("paulista") || league.includes("carioca") || league.includes("catarinense") || league.includes("copinha");
         });
 
-        const priorityTerms = ['Serie A', 'Copa do Brasil', 'Libertadores', 'Paulista', 'Carioca', 'Gaucho', 'Catarinense', 'Mineiro', 'Copinha'];
-        const mainGames = allMatches.filter(match => priorityTerms.some(term => match.league.name.includes(term)));
-
-        if (mainGames.length > 0) {
-            renderMatches(mainGames, mainContainer);
-        } else if (allMatches.length > 0) {
+        if (allMatches.length > 0) {
             renderMatches(allMatches, mainContainer);
         } else {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo brasileiro localizado no momento.</p></div>`;
+            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo localizado. Tente atualizar em instantes.</p></div>`;
         }
 
         if(updateIndicator) {
@@ -54,8 +53,8 @@ async function getMatches() {
         }
 
     } catch (error) {
-        console.error("Erro Crítico:", error);
-        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Erro ao carregar programação da nuvem.</p></div>`;
+        console.error("Erro na Vercel:", error);
+        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-red-500 font-bold">Servidor em manutenção ou desligado.</p></div>`;
     }
 }
 
@@ -65,17 +64,16 @@ function renderMatches(matches, container) {
         const d = new Date(match.fixture.date);
         const dateDisplay = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} • ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
         
-        // Borda azul para o Catarinense (Criciúma)
         let borderColor = match.league.name.includes('Catarinense') ? 'border-blue-400' : 'border-gray-100';
 
-        // HTML dos Canais extraídos do Wyster
+        // Renderiza canais se houver
         let channelsHtml = '';
         if (match.canais && match.canais.length > 0) {
             channelsHtml = `
                 <div class="mt-3 pt-2 border-t border-gray-100 flex flex-wrap justify-center gap-3">
                     ${match.canais.map(c => `
                         <div class="flex flex-col items-center">
-                            <img src="${c.img_url}" class="h-5 w-auto object-contain mb-1" title="${c.nome}">
+                            <img src="${c.img_url}" class="h-5 w-auto object-contain" title="${c.nome}">
                             <span class="text-[7px] text-gray-400 font-bold uppercase">${c.nome}</span>
                         </div>
                     `).join('')}
@@ -99,10 +97,6 @@ function renderMatches(matches, container) {
     }).join('');
 }
 
-// ==========================================
-// 4. ÁREA DOS FILMES E UTILITÁRIOS
-// ==========================================
-
 function renderMovies() {
     const container = document.getElementById('movies-container');
     if(!container) return;
@@ -120,15 +114,9 @@ function renderMovies() {
 
 function openTrailer(id) { document.getElementById('youtube-player').src = `https://www.youtube.com/embed/${id}?autoplay=1`; document.getElementById('video-modal').classList.remove('hidden'); }
 function closeVideoModal() { document.getElementById('youtube-player').src = ''; document.getElementById('video-modal').classList.add('hidden'); }
-function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Olá! Vim pelo site.`, '_blank'); }
+function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Olá!`, '_blank'); }
 function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assistir ${h} x ${a} no MagiaTV!`)}`, '_blank'); }
 function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis`, '_blank'); }
-function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assinar o ${p} de ${v}.`)}`, '_blank'); }
+function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero o plano ${p}`)}`, '_blank'); }
 
-document.addEventListener('DOMContentLoaded', () => { 
-    getMatches(); 
-    renderMovies(); 
-    const b = document.getElementById('menu-btn');
-    if(b) b.onclick = () => document.getElementById('mobile-menu').classList.toggle('hidden');
-    document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeVideoModal(); });
-});
+document.addEventListener('DOMContentLoaded', () => { getMatches(); renderMovies(); if(document.getElementById('menu-btn')) document.getElementById('menu-btn').onclick = () => document.getElementById('mobile-menu').classList.toggle('hidden'); });
