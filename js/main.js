@@ -68,8 +68,11 @@ async function getMatches() {
         
         let allMatches = filterBrazilianMatches(data.response);
 
-        // Separação: Ligas Nacionais/Internacionais vs Estaduais
-        const priorityTerms = ['Serie A', 'Copa do Brasil', 'Libertadores', 'Sudamericana', 'Recopa', 'World Cup', 'Mundial'];
+        // SEPARAÇÃO INTELIGENTE: Ligas de Elite e Estaduais Principais
+        const priorityTerms = [
+            'Serie A', 'Copa do Brasil', 'Libertadores', 'Sudamericana', 'Recopa', 'World Cup', 'Mundial',
+            'Paulista', 'Carioca', 'Gaucho', 'Catarinense', 'Mineiro', 'Paranaense', 'Matogrossense', 'Sul-Matogrossense'
+        ];
 
         const mainGames = allMatches.filter(match => {
             const leagueName = match.league.name;
@@ -78,20 +81,20 @@ async function getMatches() {
             return isSelecao || isPriorityLeague;
         });
 
-        // Todos os outros (Estaduais RS, SC, PR, SP, RJ, MG, MT, MS, etc)
+        // O resto vai para "Outras Ligas"
         const otherGames = allMatches.filter(match => !mainGames.includes(match));
 
         if (mainGames.length > 0) {
             renderMatches(mainGames, mainContainer);
         } else {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo "Principal" (Série A/Liberta/Copa) nesta semana.</p></div>`;
+            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo "Principal" (Nacionais ou Estaduais de Elite) nesta semana.</p></div>`;
         }
 
         if (otherGames.length > 0) {
             renderMatches(otherGames, otherContainer);
             if(btnContainer) {
                 btnContainer.classList.remove('hidden');
-                btnContainer.querySelector('button').innerHTML = `<i class="fas fa-chevron-down mr-2"></i> Ver +${otherGames.length} jogos (Estaduais e Outras Ligas)`;
+                btnContainer.querySelector('button').innerHTML = `<i class="fas fa-chevron-down mr-2"></i> Ver +${otherGames.length} jogos (Ligas Secundárias)`;
             }
         } else {
             if(btnContainer) btnContainer.classList.add('hidden');
@@ -189,7 +192,7 @@ function closeVideoModal() {
 }
 
 function translateStatus(s) { const m={'TBD':'A Definir','NS':'Agendado','1H':'1º Tempo','HT':'Intervalo','2H':'2º Tempo','ET':'Prorrogação','P':'Pênaltis','FT':'Fim','LIVE':'Ao Vivo'}; return m[s]||s; }
-function formatDate(d) { return d.toLocaleDateString('en-CA'); }
+function formatDate(d) { return d.toLocaleDateString('en-CA'); } // Formato YYYY-MM-DD local
 function addDays(d, days) { const r = new Date(d); r.setDate(r.getDate() + days); return r; }
 
 function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent("Olá! 👋 Vim pelo site e gostaria de falar com um atendente.")}`, '_blank'); }
