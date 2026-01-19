@@ -2,10 +2,10 @@
 // 1. FILMES EM ALTA
 // ==========================================
 const MOVIE_HIGHLIGHTS = [
-    { "title": "Plano em Família 2 (2025)", "category": "Ação, Comédia", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/aLgvLNWETZ2wtPzU3E7lavEpCJw.jpg", "trailerId": "64-0cFnQ6Ls" },
-    { "title": "Zootopia 2 (2025)", "category": "Animação, Família", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/fthvYnjERbXt3ILjLjHpPNd5IVJ.jpg", "trailerId": "z-C1VtXQr6o" },
-    { "title": "IT: Bem-Vindo a Derry (2025)", "category": "Drama, Mistério", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/gMTfrLvrDaD0zrhpLZ7zXIIpKfJ.jpg", "trailerId": "_t4_QgZoyn8" },
-    { "title": "Frankenstein (2025)", "category": "Drama, Terror", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/cXsMxClCcAF1oMwoXZvbKwWoNeS.jpg", "trailerId": "gRvl9uxmcbA" }
+    { "title": "Plano em Família 2 (2025)", "category": "Ação", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/aLgvLNWETZ2wtPzU3E7lavEpCJw.jpg", "trailerId": "64-0cFnQ6Ls" },
+    { "title": "Zootopia 2 (2025)", "category": "Animação", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/fthvYnjERbXt3ILjLjHpPNd5IVJ.jpg", "trailerId": "z-C1VtXQr6o" },
+    { "title": "IT: Bem-Vindo a Derry", "category": "Terror", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/gMTfrLvrDaD0zrhpLZ7zXIIpKfJ.jpg", "trailerId": "_t4_QgZoyn8" },
+    { "title": "Frankenstein (2025)", "category": "Terror", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/cXsMxClCcAF1oMwoXZvbKwWoNeS.jpg", "trailerId": "gRvl9uxmcbA" }
 ];
 
 // ==========================================
@@ -25,14 +25,21 @@ async function getMatches() {
     const mainContainer = document.getElementById('main-matches');
     
     if(!mainContainer) return; 
-    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Buscando jogos...';
+    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Sincronizando...';
 
     try {
         const response = await fetch(API_CONFIG.backendUrl);
         const data = await response.json();
+
+        // Verifica erro de limite da API-Sports
+        if (data.errors && Object.keys(data.errors).length > 0) {
+            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-yellow-50 text-yellow-700 rounded-lg">Limite de buscas diárias atingido (API Free).</div>`;
+            return;
+        }
+
         const responseList = data.response || [];
 
-        // Filtro para Brasil e Estaduais (Catarinense, etc)
+        // Filtro para Brasil e Estaduais
         let allMatches = responseList.filter(match => {
             const league = (match.league.name || "").toLowerCase();
             const country = (match.league.country || "").toLowerCase();
@@ -42,17 +49,17 @@ async function getMatches() {
         if (allMatches.length > 0) {
             renderMatches(allMatches, mainContainer);
         } else {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo localizado no momento. Tente atualizar a página.</p></div>`;
+            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo localizado no momento para o dia de hoje.</p></div>`;
         }
 
         if(updateIndicator) {
             const time = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Agenda MagiaTV atualizada às ${time}`;
+            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>MagiaTV atualizada às ${time}`;
         }
 
     } catch (error) {
         console.error("Erro:", error);
-        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">O servidor da MagiaTV está temporariamente offline.</p></div>`;
+        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Servidor em manutenção.</p></div>`;
     }
 }
 
@@ -62,18 +69,13 @@ function renderMatches(matches, container) {
         const d = new Date(match.fixture.date);
         const dateDisplay = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} • ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
         
-        let borderColor = match.league.name.includes('Catarinense') ? 'border-blue-500 shadow-md' : 'border-gray-100';
+        let borderColor = match.league.name.includes('Catarinense') ? 'border-blue-500 shadow-lg' : 'border-gray-100';
 
         let channelsHtml = '';
         if (match.canais && match.canais.length > 0) {
             channelsHtml = `
                 <div class="mt-3 pt-2 border-t border-gray-100 flex flex-wrap justify-center gap-2">
-                    ${match.canais.map(c => `
-                        <div class="flex flex-col items-center">
-                            <img src="${c.img_url}" class="h-5 w-auto object-contain mb-1">
-                            <span class="text-[7px] text-gray-400 font-bold uppercase">${c.nome}</span>
-                        </div>
-                    `).join('')}
+                    ${match.canais.map(c => `<img src="${c.img_url}" class="h-5 w-auto object-contain" title="${c.nome}">`).join('')}
                 </div>`;
         }
 
@@ -109,9 +111,6 @@ function renderMovies() {
 
 function openTrailer(id) { document.getElementById('youtube-player').src = `https://www.youtube.com/embed/${id}?autoplay=1`; document.getElementById('video-modal').classList.remove('hidden'); }
 function closeVideoModal() { document.getElementById('youtube-player').src = ''; document.getElementById('video-modal').classList.add('hidden'); }
-function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Olá!`, '_blank'); }
 function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assistir ${h} x ${a} no MagiaTV!`)}`, '_blank'); }
-function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis`, '_blank'); }
-function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assinar o ${p} de ${v}.`)}`, '_blank'); }
 
 document.addEventListener('DOMContentLoaded', () => { getMatches(); renderMovies(); if(document.getElementById('menu-btn')) document.getElementById('menu-btn').onclick = () => document.getElementById('mobile-menu').classList.toggle('hidden'); });
