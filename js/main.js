@@ -15,7 +15,7 @@ const MOVIE_HIGHLIGHTS = [
         "trailerId": "z-C1VtXQr6o"
     },
     {
-        "title": "IT: Bem-Vindos a Derry (2025)",
+        "title": "IT: Bem-Vindo a Derry (2025)",
         "category": "Drama, Mistério",
         "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/gMTfrLvrDaD0zrhpLZ7zXIIpKfJ.jpg",
         "trailerId": "_t4_QgZoyn8"
@@ -37,12 +37,8 @@ const API_CONFIG = {
     whatsappNumber: '5548991004780' 
 };
 
-const myHeaders = new Headers();
-myHeaders.append("x-rapidapi-key", API_CONFIG.key);
-myHeaders.append("x-rapidapi-host", "v3.football.api-sports.io");
-
 // ==========================================
-// LÓGICA DE FUTEBOL
+// LÓGICA DE FUTEBOL (VERSÃO CORRIGIDA API-SPORTS)
 // ==========================================
 
 async function getMatches() {
@@ -53,12 +49,16 @@ async function getMatches() {
     
     if(!mainContainer) return; 
 
-    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Sincronizando com satélite...';
+    if(updateIndicator) updateIndicator.innerHTML = '<i class="fas fa-sync-alt mr-2 animate-spin"></i>Conectando ao servidor API-Sports...';
 
     const todayStr = new Date().toLocaleDateString('en-CA');
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() + 7);
     const nextWeekStr = nextWeek.toLocaleDateString('en-CA');
+    
+    // Configuração de Cabeçalhos CORRETA para API-Sports
+    const myHeaders = new Headers();
+    myHeaders.append("x-apisports-key", API_CONFIG.key); // <-- CORREÇÃO: x-apisports-key
     
     let url = `${API_CONFIG.url}/fixtures?from=${todayStr}&to=${nextWeekStr}&timezone=America/Sao_Paulo`;
     
@@ -66,20 +66,24 @@ async function getMatches() {
         let response = await fetch(url, { method: 'GET', headers: myHeaders });
         let data = await response.json();
         
-        // Verificação de Erro de Limite da API
-        if (data.errors && data.errors.requests) {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-yellow-50 border border-yellow-200 rounded-lg"><p class="text-yellow-700 font-bold">Limite diário da API atingido (100/100).</p><p class="text-xs">Os jogos voltarão a aparecer automaticamente em algumas horas.</p></div>`;
+        // Verifica se há erro de autenticação ou limite
+        if (data.errors && Object.keys(data.errors).length > 0) {
+            const erro = data.errors.requests || data.errors.token || "Erro de Chave";
+            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-red-50 border border-red-200 rounded-lg"><p class="text-red-700 font-bold">Aviso da API: ${erro}</p></div>`;
             return;
         }
 
         let allMatches = (data.response || []).filter(match => {
             const league = (match.league.name || "").toLowerCase();
             const country = (match.league.country || "").toLowerCase();
-            return country === "brazil" || league.includes("paulista") || league.includes("carioca") || league.includes("catarinense");
+            return country === "brazil" || league.includes("paulista") || league.includes("carioca") || league.includes("catarinense") || league.includes("copa sao paulo") || league.includes("copinha");
         });
 
-        // Termos que definem o que vai para o TOPO
-        const priorityTerms = ['Serie A', 'Copa do Brasil', 'Libertadores', 'Sudamericana', 'Paulista', 'Carioca', 'Gaucho', 'Catarinense', 'Mineiro', 'Paranaense', 'Copinha'];
+        // PRIORIDADE NO TOPO: Séries A/B, Libertadores, Estaduais Principais e Copinha
+        const priorityTerms = [
+            'Serie A', 'Serie B', 'Copa do Brasil', 'Libertadores', 'Sudamericana', 
+            'Paulista', 'Carioca', 'Gaucho', 'Catarinense', 'Mineiro', 'Paranaense', 'Copa Sao Paulo'
+        ];
 
         const mainGames = allMatches.filter(match => {
             const leagueName = match.league.name;
@@ -88,14 +92,13 @@ async function getMatches() {
 
         const otherGames = allMatches.filter(match => !mainGames.includes(match));
 
-        // Renderização Final
+        // Renderização Dinâmica
         if (mainGames.length > 0) {
             renderMatches(mainGames, mainContainer);
         } else if (allMatches.length > 0) {
-            // Se não houver "principais", mas houver "outros", mostra os outros no topo para não ficar vazio
-            renderMatches(allMatches, mainContainer);
+            renderMatches(allMatches, mainContainer); // Mostra qualquer BR se não houver elite
         } else {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo brasileiro localizado para esta semana.</p></div>`;
+            mainContainer.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-lg shadow"><p class="text-gray-500">Nenhum jogo brasileiro disponível para esta data na API.</p></div>`;
         }
 
         if (otherGames.length > 0 && mainGames.length > 0) {
@@ -111,7 +114,8 @@ async function getMatches() {
         }
 
     } catch (error) {
-        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Erro de conexão com o servidor de esportes.</p></div>`;
+        console.error("Erro MagiaTV:", error);
+        mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Falha na conexão de rede.</p></div>`;
     }
 }
 
@@ -121,8 +125,14 @@ function renderMatches(matches, container) {
         const d = new Date(match.fixture.date);
         const dateDisplay = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')} • ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
         
+        // Cores das Bordas por Campeonato
+        let borderColor = 'border-gray-100';
+        if(match.league.name.includes('Serie A')) borderColor = 'border-green-400';
+        if(match.league.name.includes('Libertadores')) borderColor = 'border-yellow-400';
+        if(match.league.name.includes('Catarinense')) borderColor = 'border-blue-400';
+
         return `
-            <div class="bg-white rounded-lg shadow-md p-4 border border-gray-100 relative card-hover">
+            <div class="bg-white rounded-lg shadow-md p-4 border-l-4 ${borderColor} relative card-hover">
                 <div class="flex items-center justify-between mb-4 border-b pb-2">
                     <span class="${isLive ? 'bg-red-100 text-red-800 animate-pulse' : 'bg-gray-100 text-gray-600'} px-2 py-1 rounded text-xs font-bold uppercase">${isLive ? 'AO VIVO' : 'Agendado'}</span>
                     <span class="text-xs text-gray-500 text-right"><div class="font-bold">${dateDisplay}</div><div class="text-blue-600 font-medium truncate max-w-[120px]">${match.league.name}</div></span>
