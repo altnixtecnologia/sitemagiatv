@@ -1,6 +1,3 @@
-// ==========================================
-// 1. FILMES E SÉRIES
-// ==========================================
 const MOVIE_HIGHLIGHTS = [
     { "title": "Plano em Família 2", "category": "Ação", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/aLgvLNWETZ2wtPzU3E7lavEpCJw.jpg", "trailerId": "64-0cFnQ6Ls" },
     { "title": "Zootopia 2", "category": "Animação", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/fthvYnjERbXt3ILjLjHpPNd5IVJ.jpg", "trailerId": "z-C1VtXQr6o" },
@@ -13,9 +10,6 @@ const API_CONFIG = {
     whatsappNumber: '5548991004780' 
 };
 
-// ==========================================
-// 2. LÓGICA DE FUTEBOL
-// ==========================================
 async function getMatches() {
     const mainContainer = document.getElementById('main-matches');
     const updateIndicator = document.getElementById('update-indicator');
@@ -39,20 +33,20 @@ function renderMatches(matches, container) {
         const isLive = match.fixture.status.short === 'LIVE';
         let channelsHtml = (match.canais || []).map(c => `
             <div class="flex flex-col items-center">
-                <img src="${c.img_url}" class="h-6 w-auto object-contain" onerror="this.src='https://via.placeholder.com/30?text=TV'">
+                <img src="${c.img_url}" class="h-6 w-auto object-contain" onerror="this.src='https://media.api-sports.io/football/teams/default.png'">
                 <span class="text-[7px] text-gray-400 font-bold uppercase mt-1">${c.nome}</span>
             </div>`).join('');
 
         return `
             <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500 card-hover">
                 <div class="flex items-center justify-between mb-4 border-b pb-2">
-                    <span class="${isLive ? 'bg-red-100 text-red-800 animate-pulse' : 'bg-gray-100 text-gray-600'} px-2 py-1 rounded text-xs font-bold uppercase">${isLive ? 'AO VIVO' : 'Grade'}</span>
+                    <span class="${isLive ? 'bg-red-100 text-red-800 animate-pulse' : 'bg-gray-100 text-gray-600'} px-2 py-1 rounded text-xs font-bold uppercase">${isLive ? 'AO VIVO' : 'Canais'}</span>
                     <span class="text-xs text-blue-600 font-bold truncate max-w-[150px]">${match.league.name}</span>
                 </div>
                 <div class="flex items-center justify-between px-2">
-                    <div class="flex flex-col items-center w-[35%]"><img src="${match.teams.home.logo}" class="w-10 h-10 object-contain" onerror="this.src='https://via.placeholder.com/40?text=Logo'"><p class="text-xs font-bold text-center mt-2">${match.teams.home.name}</p></div>
+                    <div class="flex flex-col items-center w-[35%]"><img src="${match.teams.home.logo}" class="w-10 h-10 object-contain" onerror="this.src='https://media.api-sports.io/football/teams/default.png'"><p class="text-xs font-bold text-center mt-2">${match.teams.home.name}</p></div>
                     <div class="text-lg font-black text-gray-700">${match.goals.home ?? 0} x ${match.goals.away ?? 0}</div>
-                    <div class="flex flex-col items-center w-[35%]"><img src="${match.teams.away.logo}" class="w-10 h-10 object-contain" onerror="this.src='https://via.placeholder.com/40?text=Logo'"><p class="text-xs font-bold text-center mt-2">${match.teams.away.name}</p></div>
+                    <div class="flex flex-col items-center w-[35%]"><img src="${match.teams.away.logo}" class="w-10 h-10 object-contain" onerror="this.src='https://media.api-sports.io/football/teams/default.png'"><p class="text-xs font-bold text-center mt-2">${match.teams.away.name}</p></div>
                 </div>
                 <div class="mt-3 pt-2 border-t flex flex-wrap justify-center gap-3">${channelsHtml}</div>
                 <button class="w-full mt-4 bg-green-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition" onclick="openWhatsAppGame('${match.teams.home.name}', '${match.teams.away.name}')">Assistir Agora</button>
@@ -60,9 +54,6 @@ function renderMatches(matches, container) {
     }).join('');
 }
 
-// ==========================================
-// 3. UTILITÁRIOS E BOTÕES
-// ==========================================
 function renderMovies() {
     const container = document.getElementById('movies-container');
     if(!container) return;
@@ -83,10 +74,4 @@ function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsa
 function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis na MagiaTV!`, '_blank'); }
 function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero o plano ${p} de ${v}`)}`, '_blank'); }
 
-document.addEventListener('DOMContentLoaded', () => { 
-    getMatches(); 
-    renderMovies(); 
-    const b = document.getElementById('menu-btn');
-    if(b) b.onclick = () => document.getElementById('mobile-menu').classList.toggle('hidden');
-    document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeVideoModal(); });
-});
+document.addEventListener('DOMContentLoaded', () => { getMatches(); renderMovies(); if(document.getElementById('menu-btn')) document.getElementById('menu-btn').onclick = () => document.getElementById('mobile-menu').classList.toggle('hidden'); });
