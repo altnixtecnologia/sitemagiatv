@@ -1,55 +1,169 @@
-const WHATS_NUMBER = '5548991004780';
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MagiaTV - A Magia da TV ao seu alcance!</title>
+    <link rel="icon" type="image/png" href="https://yftikqosmgpfzoacrwxz.supabase.co/storage/v1/object/public/Imagens/logo%20magiatv.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
+        .magic-glow { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
+        .card-hover:hover { transform: translateY(-5px); transition: all 0.3s; }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col min-h-screen">
 
-// Filmes Restaurados
-const MOVIE_HIGHLIGHTS = [
-    { "title": "Plano em Família 2", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/aLgvLNWETZ2wtPzU3E7lavEpCJw.jpg", "trailerId": "64-0cFnQ6Ls" },
-    { "title": "Zootopia 2", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/fthvYnjERbXt3ILjLjHpPNd5IVJ.jpg", "trailerId": "z-C1VtXQr6o" },
-    { "title": "IT: Derry (2025)", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/gMTfrLvrDaD0zrhpLZ7zXIIpKfJ.jpg", "trailerId": "_t4_QgZoyn8" },
-    { "title": "Frankenstein", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/cXsMxClCcAF1oMwoXZvbKwWoNeS.jpg", "trailerId": "gRvl9uxmcbA" }
-];
-
-function renderMovies() {
-    const container = document.getElementById('movies-container');
-    if(!container) return;
-    container.innerHTML = MOVIE_HIGHLIGHTS.map(m => `
-        <div class="bg-white rounded-lg shadow-md overflow-hidden group card-hover cursor-pointer" onclick="openTrailer('${m.trailerId}')">
-            <div class="relative aspect-[2/3] overflow-hidden">
-                <img src="${m.image}" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
-                    <i class="fas fa-play text-white text-3xl"></i>
+    <header class="gradient-bg text-white shadow-lg">
+        <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-6">
+                <div class="relative">
+                    <img src="https://yftikqosmgpfzoacrwxz.supabase.co/storage/v1/object/public/Imagens/logo%20magiatv.png" 
+                         alt="MagiaTV Logo" 
+                         class="w-64 h-64 object-contain rounded-lg bg-gradient-to-br from-blue-900/20 to-purple-900/20 backdrop-blur-sm border border-yellow-400/30 magic-glow shadow-lg">
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-yellow-400 drop-shadow-lg">MagiaTV</h1>
+                    <p class="text-sm text-yellow-200 opacity-90">Uma ponte entre o entretenimento</p>
                 </div>
             </div>
-            <div class="p-3 text-center text-xs font-bold text-gray-700">${m.title}</div>
-        </div>`).join('');
-}
+            <div class="hidden md:flex space-x-6">
+                <a href="#destaques" class="hover:text-blue-200 transition">Destaques</a>
+                <a href="#planos" class="hover:text-blue-200 transition">Planos</a>
+                <button onclick="openWhatsAppGeneral()" class="hover:text-blue-200 transition">Fale Conosco</button>
+            </div>
+        </nav>
+    </header>
 
-// Funções de Venda e Modal
-function buyPlan(plano, valor) {
-    window.open(`https://wa.me/${WHATS_NUMBER}?text=${encodeURIComponent(`Olá! Quero o ${plano} de ${valor} na MagiaTV.`)}`, '_blank');
-}
+    <section class="gradient-bg text-white py-20 text-center">
+        <div class="container mx-auto px-4">
+            <h2 class="text-4xl md:text-6xl font-bold mb-6">A Magia da TV ao seu alcance!</h2>
+            <p class="text-xl mb-8 text-gray-200">Filmes, séries e futebol ao vivo em alta definição</p>
+            <div class="flex flex-col md:flex-row gap-4 justify-center">
+                <button onclick="requestTest()" class="bg-white text-purple-600 px-8 py-4 rounded-lg font-bold hover:bg-gray-100 transition shadow-lg text-lg">
+                    <i class="fas fa-gamepad mr-2"></i>Pedir Teste Grátis
+                </button>
+                <button onclick="openWhatsAppGeneral()" class="border-2 border-white text-white px-8 py-4 rounded-lg font-bold hover:bg-white hover:text-purple-600 transition text-lg">
+                    <i class="fas fa-whatsapp mr-2"></i>Fale Conosco
+                </button>
+            </div>
+        </div>
+    </section>
 
-function requestTest() {
-    window.open(`https://wa.me/${WHATS_NUMBER}?text=Quero um teste grátis na MagiaTV!`, '_blank');
-}
+    <section id="destaques" class="py-16">
+        <div class="container mx-auto px-4">
+            <div class="mb-16">
+                <div class="text-center mb-10">
+                    <h4 class="text-2xl font-semibold text-green-600 mb-2"><i class="fas fa-futbol mr-2"></i>Futebol na Semana</h4>
+                    <h3 id="matches-title" class="text-4xl font-bold text-gray-800">Jogos Principais</h3>
+                    <div id="update-indicator" class="mt-2 text-sm text-gray-500">
+                        <i class="fas fa-sync-alt mr-2 animate-spin"></i>Carregando tabela...
+                    </div>
+                </div>
+                <div id="main-matches" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[100px]"></div>
+                <div id="show-more-container" class="text-center mt-8 hidden">
+                    <button onclick="toggleOtherGames()" class="bg-white border-2 border-gray-300 text-gray-600 px-6 py-2 rounded-full font-semibold hover:bg-gray-50 transition shadow-sm">
+                        <i class="fas fa-chevron-down mr-2"></i>Ver jogos de outras ligas
+                    </button>
+                </div>
+                <div id="other-matches" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 hidden"></div>
+            </div>
+            <hr class="border-gray-200 my-12">
+            <h3 class="text-3xl font-bold text-center mb-8 text-gray-800">Filmes em Alta</h3>
+            <div id="movies-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+        </div>
+    </section>
 
-function openWysterModal() {
-    document.getElementById('wyster-modal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-}
+    <section id="planos" class="py-16 bg-gray-100">
+        <div class="container mx-auto px-4 max-w-6xl">
+            <h3 class="text-3xl font-bold text-center mb-12 text-gray-800">Nossos Planos</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden border-t-4 border-gray-400 flex flex-col">
+                    <div class="bg-gray-100 p-6 text-center border-b">
+                        <h4 class="text-2xl font-bold text-gray-800">Plano Prata</h4>
+                        <span class="inline-block bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-semibold mt-2">Custo-Benefício</span>
+                    </div>
+                    <div class="p-6 flex-grow space-y-4">
+                        <div class="flex justify-between items-center border-b pb-3">
+                            <span class="text-gray-600">Mensal</span>
+                            <div class="text-right">
+                                <span class="text-2xl font-bold">R$ 35,00</span>
+                                <button onclick="buyPlan('Prata Mensal', 'R$ 35,00')" class="block text-xs text-blue-600 hover:underline">Contratar</button>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center border-b pb-3">
+                            <span class="text-gray-600">Trimestral</span>
+                            <div class="text-right">
+                                <span class="text-2xl font-bold">R$ 85,00</span>
+                                <button onclick="buyPlan('Prata Trimestral', 'R$ 85,00')" class="block text-xs text-blue-600 hover:underline">Contratar</button>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center border-b pb-3">
+                            <span class="text-gray-600">Semestral</span>
+                            <div class="text-right">
+                                <span class="text-2xl font-bold">R$ 140,00</span>
+                                <button onclick="buyPlan('Prata Semestral', 'R$ 140,00')" class="block text-xs text-blue-600 hover:underline">Contratar</button>
+                            </div>
+                        </div>
+                        <div class="bg-blue-50 -mx-6 px-6 py-4 flex justify-between items-center mt-2">
+                            <div><span class="text-blue-800 font-bold block">Anual</span><span class="text-xs text-blue-600">+ App Grátis</span></div>
+                            <div class="text-right"><span class="text-3xl font-bold text-blue-700">R$ 190,00</span><button onclick="buyPlan('Prata Anual', 'R$ 190,00')" class="bg-blue-600 text-white px-4 py-2 rounded text-sm mt-1">Contratar</button></div>
+                        </div>
+                    </div>
+                </div>
 
-function closeWysterModal() {
-    document.getElementById('wyster-modal').classList.add('hidden');
-    document.body.style.overflow = 'auto';
-}
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden border-t-4 border-cyan-500 flex flex-col relative">
+                    <div class="absolute top-0 right-0 bg-cyan-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg uppercase">PREMIUM</div>
+                    <div class="bg-cyan-50 p-6 text-center border-b">
+                        <h4 class="text-2xl font-bold text-gray-800">Plano Diamante</h4>
+                        <span class="inline-block bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-sm font-semibold mt-2">Máxima Qualidade</span>
+                    </div>
+                    <div class="p-6 flex-grow space-y-4">
+                        <div class="flex justify-between items-center border-b pb-3">
+                            <span class="text-gray-600">Mensal</span>
+                            <div class="text-right">
+                                <span class="text-2xl font-bold">R$ 45,00</span>
+                                <button onclick="buyPlan('Diamante Mensal', 'R$ 45,00')" class="block text-xs text-cyan-600 hover:underline">Contratar</button>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center border-b pb-3">
+                            <span class="text-gray-600">Trimestral</span>
+                            <div class="text-right">
+                                <span class="text-2xl font-bold">R$ 115,00</span>
+                                <button onclick="buyPlan('Diamante Trimestral', 'R$ 115,00')" class="block text-xs text-cyan-600 hover:underline">Contratar</button>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center border-b pb-3">
+                            <span class="text-gray-600">Semestral</span>
+                            <div class="text-right">
+                                <span class="text-2xl font-bold">R$ 180,00</span>
+                                <button onclick="buyPlan('Diamante Semestral', 'R$ 180,00')" class="block text-xs text-cyan-600 hover:underline">Contratar</button>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 -mx-6 px-6 py-4 flex justify-between items-center mt-2">
+                            <div><span class="text-gray-800 font-bold block">Anual</span><span class="text-xs text-green-600">Maior Economia</span></div>
+                            <div class="text-right"><span class="text-3xl font-bold text-gray-800">R$ 280,00</span><button onclick="buyPlan('Diamante Anual', 'R$ 280,00')" class="bg-cyan-600 text-white px-4 py-2 rounded text-sm mt-1">Contratar</button></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-function openTrailer(id) { 
-    document.getElementById('youtube-player').src = `https://www.youtube.com/embed/${id}?autoplay=1`; 
-    document.getElementById('video-modal').classList.remove('hidden'); 
-}
+    <footer class="bg-gray-800 text-white py-8 text-center">
+        <p>&copy; 2024 MagiaTV. Uma ponte entre o entretenimento.</p>
+    </footer>
 
-function closeVideoModal() { 
-    document.getElementById('youtube-player').src = ''; 
-    document.getElementById('video-modal').classList.add('hidden'); 
-}
+    <div id="video-modal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 hidden" onclick="closeVideoModal()">
+        <div class="bg-black w-full max-w-4xl mx-4 aspect-video relative rounded-lg" onclick="event.stopPropagation()">
+            <button class="absolute -top-10 right-0 text-white text-3xl" onclick="closeVideoModal()"><i class="fas fa-times"></i></button>
+            <iframe id="youtube-player" class="w-full h-full rounded-lg" src="" frameborder="0" allowfullscreen></iframe>
+        </div>
+    </div>
 
-document.addEventListener('DOMContentLoaded', renderMovies);
+    <script src="js/main.js"></script>
+</body>
+</html>
