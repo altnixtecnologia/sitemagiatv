@@ -12,7 +12,7 @@
         body { font-family: 'Inter', sans-serif; }
         .gradient-bg { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
         .magic-glow { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
-        .card-hover:hover { transform: translateY(-5px); transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-5px); transition: all 0.3s; }
     </style>
 </head>
 <body class="bg-gray-50 flex flex-col min-h-screen">
@@ -20,90 +20,168 @@
     <header class="gradient-bg text-white shadow-lg">
         <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-6">
-                <img src="https://yftikqosmgpfzoacrwxz.supabase.co/storage/v1/object/public/Imagens/logo%20magiatv.png" alt="MagiaTV" class="w-48 h-48 object-contain rounded-lg magic-glow">
+                <div class="relative">
+                    <img src="https://yftikqosmgpfzoacrwxz.supabase.co/storage/v1/object/public/Imagens/logo%20magiatv.png" 
+                         alt="MagiaTV Logo" 
+                         class="w-64 h-64 object-contain rounded-lg bg-gradient-to-br from-blue-900/20 to-purple-900/20 backdrop-blur-sm border border-yellow-400/30 magic-glow shadow-lg">
+                </div>
                 <div>
-                    <h1 class="text-2xl font-bold text-yellow-400">MagiaTV</h1>
+                    <h1 class="text-2xl font-bold text-yellow-400 drop-shadow-lg">MagiaTV</h1>
                     <p class="text-sm text-yellow-200 opacity-90">Uma ponte entre o entretenimento</p>
                 </div>
             </div>
             <div class="hidden md:flex space-x-6">
-                <a href="#destaques" class="hover:text-blue-200">Destaques</a>
-                <a href="#planos" class="hover:text-blue-200">Planos</a>
-                <button onclick="openWhatsAppGeneral()" class="hover:text-blue-200">Fale Conosco</button>
+                <a href="#destaques" class="hover:text-blue-200 transition">Destaques</a>
+                <a href="#planos" class="hover:text-blue-200 transition">Planos</a>
+                <button onclick="openWhatsAppGeneral()" class="hover:text-blue-200 transition">Fale Conosco</button>
             </div>
-            <button id="menu-btn" class="md:hidden"><i class="fas fa-bars text-xl"></i></button>
+            <button id="menu-btn" class="md:hidden">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
         </nav>
-        <div id="mobile-menu" class="hidden px-4 pb-4">
-            <a href="#destaques" class="block py-2">Destaques</a>
-            <a href="#planos" class="block py-2">Planos</a>
+        <div id="mobile-menu" class="hidden md:hidden px-4 pb-4">
+            <a href="#destaques" class="block py-2 hover:text-blue-200">Destaques</a>
+            <a href="#planos" class="block py-2 hover:text-blue-200">Planos</a>
+            <button onclick="openWhatsAppGeneral()" class="block py-2 text-left w-full hover:text-blue-200">Fale Conosco</button>
         </div>
     </header>
 
-    <section class="gradient-bg text-white py-16 text-center">
+    <section class="gradient-bg text-white py-20 text-center">
         <div class="container mx-auto px-4">
-            <h2 class="text-4xl md:text-5xl font-bold mb-6">A Magia da TV ao seu alcance!</h2>
+            <h2 class="text-4xl md:text-6xl font-bold mb-6">A Magia da TV ao seu alcance!</h2>
+            <p class="text-xl mb-8 text-gray-200">Filmes e séries em alta definição</p>
             <div class="flex flex-col md:flex-row gap-4 justify-center">
-                <button onclick="requestTest()" class="bg-white text-purple-600 px-8 py-4 rounded-lg font-bold shadow-lg"><i class="fas fa-gamepad mr-2"></i>Teste Grátis</button>
-                <button onclick="openWhatsAppGeneral()" class="border-2 border-white px-8 py-4 rounded-lg font-bold hover:bg-white hover:text-purple-600 transition"><i class="fas fa-whatsapp mr-2"></i>Fale Conosco</button>
+                <button onclick="requestTest()" class="bg-white text-purple-600 px-8 py-4 rounded-lg font-bold hover:bg-gray-100 transition shadow-lg text-lg">
+                    <i class="fas fa-gamepad mr-2"></i>Pedir Teste Grátis
+                </button>
+                <button onclick="openWhatsAppGeneral()" class="border-2 border-white text-white px-8 py-4 rounded-lg font-bold hover:bg-white hover:text-purple-600 transition text-lg">
+                    <i class="fas fa-whatsapp mr-2"></i>Fale Conosco
+                </button>
             </div>
         </div>
     </section>
 
     <section id="destaques" class="py-16">
         <div class="container mx-auto px-4">
-            <div class="text-center mb-10">
-                <h4 class="text-2xl font-semibold text-green-600 mb-2"><i class="fas fa-futbol mr-2"></i>Futebol na Semana</h4>
-                <h3 class="text-4xl font-bold text-gray-800">Jogos Principais</h3>
-                <div id="update-indicator" class="mt-2 text-sm text-gray-500">Conectando ao satélite...</div>
-            </div>
-            <div id="main-matches" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"></div>
-            
-            <div id="show-more-container" class="text-center hidden">
-                <button onclick="toggleOtherGames()" class="bg-white border px-6 py-2 rounded-full font-semibold">Ver outros jogos</button>
-            </div>
-            <div id="other-matches" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 hidden"></div>
-
-            <hr class="border-gray-200 my-12">
             <h3 class="text-3xl font-bold text-center mb-8 text-gray-800">Filmes em Alta</h3>
             <div id="movies-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"></div>
         </div>
     </section>
 
-    <section id="planos" class="py-16 bg-gray-100">
+    <section id="planos" class="py-16 bg-gray-100 flex-grow">
         <div class="container mx-auto px-4 max-w-6xl">
-            <h3 class="text-3xl font-bold text-center mb-12">Nossos Planos</h3>
+            <h3 class="text-3xl font-bold text-center mb-4 text-gray-800">Nossos Planos</h3>
+            <p class="text-center text-gray-600 mb-12 text-lg">Escolha o melhor da TV, na palma de sua mão</p>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="bg-white rounded-xl shadow-lg border-t-4 border-gray-400 p-6">
-                    <h4 class="text-2xl font-bold text-center">Plano Prata</h4>
-                    <div class="mt-6 space-y-4">
-                        <div class="flex justify-between"><span>Mensal</span><b>R$ 35,00</b></div>
-                        <div class="flex justify-between"><span>Trimestral</span><b>R$ 85,00</b></div>
-                        <div class="bg-blue-50 -mx-6 px-6 py-4 flex justify-between items-center">
-                            <b>Anual</b><b class="text-2xl text-blue-700">R$ 190,00</b>
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover border-t-4 border-gray-400 flex flex-col">
+                    <div class="bg-gray-100 p-6 text-center border-b">
+                        <h4 class="text-2xl font-bold text-gray-800">Plano Prata</h4>
+                        <span class="inline-block bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm font-semibold mt-2">Custo-Benefício</span>
+                    </div>
+                    <div class="p-6 flex-grow">
+                        <div class="space-y-4 text-sm">
+                            <div class="flex justify-between items-center border-b pb-3">
+                                <span class="text-gray-600 font-medium">Mensal</span>
+                                <div class="text-right">
+                                    <span class="text-2xl font-bold text-gray-800">R$ 35,00</span>
+                                    <button onclick="buyPlan('Prata Mensal', 'R$ 35,00')" class="block text-xs text-blue-600 hover:underline">Contratar</button>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center border-b pb-3">
+                                <span class="text-gray-600 font-medium">Trimestral</span>
+                                <div class="text-right">
+                                    <span class="text-2xl font-bold text-gray-800">R$ 85,00</span>
+                                    <button onclick="buyPlan('Prata Trimestral', 'R$ 85,00')" class="block text-xs text-blue-600 hover:underline">Contratar</button>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center border-b pb-3">
+                                <span class="text-gray-600 font-medium">Semestral</span>
+                                <div class="text-right">
+                                    <span class="text-2xl font-bold text-gray-800">R$ 140,00</span>
+                                    <button onclick="buyPlan('Prata Semestral', 'R$ 140,00')" class="block text-xs text-blue-600 hover:underline">Contratar</button>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 -mx-6 px-6 py-4 mt-2">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <span class="text-blue-800 font-bold block">Anual</span>
+                                        <span class="text-xs text-blue-600">+ App Grátis</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-3xl font-bold text-blue-700">R$ 190,00</span>
+                                        <button onclick="buyPlan('Prata Anual', 'R$ 190,00')" class="bg-blue-600 text-white px-4 py-2 rounded text-sm mt-1">Contratar</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <button onclick="buyPlan('Prata', 'Assinatura')" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold mt-4">Contratar</button>
                     </div>
                 </div>
-                <div class="bg-white rounded-xl shadow-lg border-t-4 border-cyan-500 p-6 relative">
-                    <div class="absolute top-0 right-0 bg-cyan-500 text-white text-xs px-3 py-1 uppercase">PREMIUM</div>
-                    <h4 class="text-2xl font-bold text-center">Plano Diamante</h4>
-                    <div class="mt-6 space-y-4">
-                        <div class="flex justify-between"><span>Mensal</span><b>R$ 45,00</b></div>
-                        <div class="flex justify-between"><span>Trimestral</span><b>R$ 115,00</b></div>
-                        <div class="bg-gray-50 -mx-6 px-6 py-4 flex justify-between items-center">
-                            <b>Anual</b><b class="text-2xl text-gray-800">R$ 280,00</b>
+
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover border-t-4 border-cyan-500 relative flex flex-col">
+                    <div class="absolute top-0 right-0 bg-cyan-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">PREMIUM</div>
+                    <div class="bg-cyan-50 p-6 text-center border-b">
+                        <h4 class="text-2xl font-bold text-gray-800">Plano Diamante</h4>
+                        <span class="inline-block bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-sm font-semibold mt-2">Máxima Qualidade</span>
+                    </div>
+                    <div class="p-6 flex-grow">
+                        <div class="space-y-4 text-sm">
+                            <div class="flex justify-between items-center border-b pb-3">
+                                <span class="text-gray-600 font-medium">Mensal</span>
+                                <div class="text-right">
+                                    <span class="text-2xl font-bold text-gray-800">R$ 45,00</span>
+                                    <button onclick="buyPlan('Diamante Mensal', 'R$ 45,00')" class="block text-xs text-cyan-600 hover:underline">Contratar</button>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center border-b pb-3">
+                                <span class="text-gray-600 font-medium">Trimestral</span>
+                                <div class="text-right">
+                                    <span class="text-2xl font-bold text-gray-800">R$ 115,00</span>
+                                    <button onclick="buyPlan('Diamante Trimestral', 'R$ 115,00')" class="block text-xs text-cyan-600 hover:underline">Contratar</button>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center border-b pb-3">
+                                <span class="text-gray-600 font-medium">Semestral</span>
+                                <div class="text-right">
+                                    <span class="text-2xl font-bold text-gray-800">R$ 180,00</span>
+                                    <button onclick="buyPlan('Diamante Semestral', 'R$ 180,00')" class="block text-xs text-cyan-600 hover:underline">Contratar</button>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 -mx-6 px-6 py-4 mt-2">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <span class="text-gray-800 font-bold block">Anual</span>
+                                        <span class="text-xs text-green-600">Maior Economia</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-3xl font-bold text-gray-800">R$ 280,00</span>
+                                        <button onclick="buyPlan('Diamante Anual', 'R$ 280,00')" class="bg-cyan-600 text-white px-4 py-2 rounded text-sm mt-1">Contratar</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <button onclick="buyPlan('Diamante', 'Assinatura')" class="w-full bg-cyan-600 text-white py-3 rounded-lg font-bold mt-4">Contratar</button>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <div id="video-modal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 hidden">
-        <div class="bg-black w-full max-w-4xl mx-4 aspect-video relative">
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4 text-center">
+            <h5 class="text-xl font-bold mb-4">MagiaTV</h5>
+            <div class="flex justify-center mb-6">
+                <button onclick="openWhatsAppGeneral()" class="text-gray-300 hover:text-white transition flex items-center">
+                    <i class="fab fa-whatsapp text-2xl mr-2"></i> Atendimento via WhatsApp
+                </button>
+            </div>
+            <p class="text-gray-400 text-sm">&copy; 2024 MagiaTV. Uma ponte entre o entretenimento.</p>
+        </div>
+    </footer>
+
+    <div id="video-modal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 hidden" onclick="closeVideoModal()">
+        <div class="bg-black w-full max-w-4xl mx-4 aspect-video relative rounded-lg" onclick="event.stopPropagation()">
             <button class="absolute -top-10 right-0 text-white text-3xl" onclick="closeVideoModal()"><i class="fas fa-times"></i></button>
-            <iframe id="youtube-player" class="w-full h-full" src="" frameborder="0" allowfullscreen></iframe>
+            <iframe id="youtube-player" class="w-full h-full rounded-lg" src="" frameborder="0" allowfullscreen></iframe>
         </div>
     </div>
 
