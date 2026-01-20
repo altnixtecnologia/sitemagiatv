@@ -23,7 +23,7 @@ function renderMovies() {
 }
 
 function buyPlan(plano, valor) {
-    window.open(`https://wa.me/${WHATS_NUMBER}?text=${encodeURIComponent(`Olá! Quero assinar o ${plano} no valor de ${valor} na MagiaTV.`)}`, '_blank');
+    window.open(`https://wa.me/${WHATS_NUMBER}?text=${encodeURIComponent(`Olá! Quero o ${plano} de ${valor} na MagiaTV.`)}`, '_blank');
 }
 
 function requestTest() {
@@ -31,7 +31,7 @@ function requestTest() {
 }
 
 function openWhatsAppGeneral() {
-    window.open(`https://wa.me/${WHATS_NUMBER}?text=Olá! Preciso de suporte.`, '_blank');
+    window.open(`https://wa.me/${WHATS_NUMBER}?text=Olá! Preciso de suporte na MagiaTV.`, '_blank');
 }
 
 function openTrailer(id) { 
@@ -47,5 +47,7 @@ function closeVideoModal() {
 document.addEventListener('DOMContentLoaded', () => {
     renderMovies();
     const menuBtn = document.getElementById('menu-btn');
-    if(menuBtn) menuBtn.onclick = () => document.getElementById('mobile-menu').classList.toggle('hidden');
+    if(menuBtn) {
+        menuBtn.onclick = () => document.getElementById('mobile-menu').classList.toggle('hidden');
+    }
 });
