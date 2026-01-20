@@ -1,64 +1,39 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 import requests
-from bs4 import BeautifulSoup
-import re
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
 CORS(app)
 
+# Configuração fixa e estável da API-Sports
 API_CONFIG = {
-    'WYSTER_PAGE': 'https://wysterjogos.nptv2.com/',
-    'WYSTER_TOKEN': '3fa85b7679ffeb398e99a27c2acd9489'
+    'KEY': '6eeb6ad06d3edbcb77ae34be643302da',
+    'URL': 'https://v3.football.api-sports.io/fixtures'
 }
 
 @app.route('/api/matches', methods=['GET'])
-def get_unified_matches():
-    session = requests.Session()
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
-    }
-
-    final_list = []
+def get_stable_matches():
+    # Define a data de hoje no fuso de Brasília
+    today = (datetime.utcnow() - timedelta(hours=3)).strftime('%Y-%m-%d')
     
     try:
-        # Acessa a página pública para ler os nomes dos jogos
-        res = session.get(API_CONFIG['WYSTER_PAGE'], headers=headers, timeout=10)
-        if res.status_code == 200:
-            soup = BeautifulSoup(res.text, 'html.parser')
-            text_content = soup.get_text(" ", strip=True)
+        response = requests.get(
+            API_CONFIG['URL'], 
+            params={'date': today, 'timezone': 'America/Sao_Paulo'}, 
+            headers={'x-apisports-key': API_CONFIG['KEY']},
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            # Retorna apenas os primeiros 10 jogos para manter a performance
+            return jsonify({"response": data.get('response', [])[:10]})
+        else:
+            return jsonify({"response": [], "error": "API indisponível"})
             
-            # Regex que busca padrões de nomes com "x" no meio
-            matches = re.findall(r'([A-Z][a-zA-ZÀ-ÿ\s\.\-]{2,20})\s+[xX]\s+([A-Z][a-zA-ZÀ-ÿ\s\.\-]{2,20})', text_content)
-            
-            for m in matches:
-                home, away = m[0].strip(), m[1].strip()
-                if "Grade" not in home and "Agenda" not in home:
-                    final_list.append({
-                        "teams": {
-                            "home": {"name": home, "logo": "https://media.api-sports.io/football/teams/default.png"},
-                            "away": {"name": away, "logo": "https://media.api-sports.io/football/teams/default.png"}
-                        },
-                        "league": {"name": "MagiaTV Ao Vivo"},
-                        "fixture": {"status": {"short": "LIVE"}},
-                        "goals": {"home": 0, "away": 0},
-                        "canais": [{"nome": "HD", "img_url": "https://cdn-icons-png.flaticon.com/512/124/124034.png"}]
-                    })
-    except:
-        pass
-
-    # Se a raspagem falhar, mantém o botão de emergência para o painel
-    if not final_list:
-        final_list.append({
-            "teams": {"home": {"name": "Grade de Jogos", "logo": ""}, "away": {"name": "MagiaTV", "logo": ""}},
-            "league": {"name": "Link Externo Disponível"},
-            "fixture": {"status": {"short": "NS"}},
-            "goals": {"home": 0, "away": 0},
-            "canais": []
-        })
-
-    return jsonify({"response": final_list})
+    except Exception as e:
+        return jsonify({"response": [], "error": str(e)})
 
 if __name__ == '__main__':
     app.run(debug=True)
