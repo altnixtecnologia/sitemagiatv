@@ -24,7 +24,7 @@ async function getMatches() {
             updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Grade Sincronizada às ${time}`;
         }
     } catch (e) {
-        mainContainer.innerHTML = `<p class="text-center text-red-500">Erro de conexão.</p>`;
+        mainContainer.innerHTML = `<p class="text-center text-red-500 font-bold">Erro de conexão com o servidor.</p>`;
     }
 }
 
@@ -49,7 +49,7 @@ function renderMatches(matches, container) {
                     <div class="flex flex-col items-center w-[35%]"><img src="${match.teams.away.logo}" class="w-10 h-10 object-contain" onerror="this.src='https://media.api-sports.io/football/teams/default.png'"><p class="text-xs font-bold text-center mt-2">${match.teams.away.name}</p></div>
                 </div>
                 <div class="mt-3 pt-2 border-t flex flex-wrap justify-center gap-3">${channelsHtml}</div>
-                <button class="w-full mt-4 bg-green-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition" onclick="openWhatsAppGame('${match.teams.home.name}', '${match.teams.away.name}')">Assistir Agora</button>
+                <button class="w-full mt-4 bg-green-600 text-white py-2 rounded-lg text-sm font-semibold" onclick="openWhatsAppGame('${match.teams.home.name}', '${match.teams.away.name}')">Assistir Agora</button>
             </div>`;
     }).join('');
 }
@@ -72,6 +72,6 @@ function closeVideoModal() { document.getElementById('youtube-player').src = '';
 function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Olá!`, '_blank'); }
 function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assistir ${h} x ${a} na MagiaTV!`)}`, '_blank'); }
 function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis na MagiaTV!`, '_blank'); }
-function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero o plano ${p} de ${v}`)}`, '_blank'); }
+function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assinar o ${p} de ${v}`)}`, '_blank'); }
 
 document.addEventListener('DOMContentLoaded', () => { getMatches(); renderMovies(); if(document.getElementById('menu-btn')) document.getElementById('menu-btn').onclick = () => document.getElementById('mobile-menu').classList.toggle('hidden'); });
