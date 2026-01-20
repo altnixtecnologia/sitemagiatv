@@ -1,6 +1,4 @@
-// ==========================================
-// 1. FILMES E CONFIGURAÇÕES
-// ==========================================
+// 1. FILMES EM ALTA (RESTAURADO)
 const MOVIE_HIGHLIGHTS = [
     { "title": "Plano em Família 2", "category": "Ação", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/aLgvLNWETZ2wtPzU3E7lavEpCJw.jpg", "trailerId": "64-0cFnQ6Ls" },
     { "title": "Zootopia 2", "category": "Animação", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/fthvYnjERbXt3ILjLjHpPNd5IVJ.jpg", "trailerId": "z-C1VtXQr6o" },
@@ -9,79 +7,47 @@ const MOVIE_HIGHLIGHTS = [
 ];
 
 const API_CONFIG = {
-    wysterUrl: 'https://wysterjogos.nptv2.com/',
-    wysterToken: '3fa85b7679ffeb398e99a27c2acd9489',
-    whatsappNumber: '5548991004780',
-    // Proxy para contornar bloqueios de navegador (CORS)
-    proxyUrl: 'https://api.allorigins.win/raw?url=' 
+    backendUrl: 'https://sitemagiatv.vercel.app/api/matches',
+    wysterExternal: 'https://wysterjogos.nptv2.com/',
+    whatsappNumber: '5548991004780' 
 };
 
-// ==========================================
-// 2. LÓGICA DE FUTEBOL (BUSCA DIRETA)
-// ==========================================
+// 2. LÓGICA DE EXIBIÇÃO
 async function getMatches() {
     const mainContainer = document.getElementById('main-matches');
     const updateIndicator = document.getElementById('update-indicator');
     if(!mainContainer) return;
 
     try {
-        // Criamos o formulário de pedido igual ao que o painel da Wyster espera
-        const formData = new FormData();
-        formData.append('token', API_CONFIG.wysterToken);
-
-        // Tentativa 1: Busca Direta (Usa o IP do usuário)
-        let response = await fetch(API_CONFIG.proxyUrl + encodeURIComponent(API_CONFIG.wysterUrl), {
-            method: 'POST',
-            body: formData
-        });
-
-        const responseList = await response.json();
-
-        if (responseList && responseList.length > 0) {
-            renderMatches(responseList, mainContainer);
-        } else {
-            mainContainer.innerHTML = `<div class="col-span-full text-center py-8"><p class="text-gray-500">Nenhum jogo ativo no painel agora.</p></div>`;
-        }
-
+        const response = await fetch(`${API_CONFIG.backendUrl}?t=${Date.now()}`);
+        const data = await response.json();
+        renderMatches(data.response || [], mainContainer);
         if(updateIndicator) {
             const time = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>Grade MagiaTV atualizada às ${time}`;
+            updateIndicator.innerHTML = `<i class="fas fa-check-circle mr-2 text-green-500"></i>MagiaTV sincronizada às ${time}`;
         }
     } catch (e) {
-        console.error("Erro na busca direta:", e);
-        mainContainer.innerHTML = `<p class="text-center text-red-500 font-bold">Erro ao sincronizar com o painel Wyster.</p>`;
+        mainContainer.innerHTML = `<p class="text-center text-red-500">Erro de conexão.</p>`;
     }
 }
 
 function renderMatches(matches, container) {
     container.innerHTML = matches.map(match => {
-        const isLive = (match.status || "").includes("AO VIVO");
-        let channelsHtml = (match.canais || []).map(c => `
-            <div class="flex flex-col items-center">
-                <img src="${c.img_url}" class="h-6 w-auto object-contain" onerror="this.src='https://media.api-sports.io/football/teams/default.png'">
-                <span class="text-[7px] text-gray-400 font-bold uppercase mt-1">${c.nome}</span>
-            </div>`).join('');
-
+        const isLive = match.fixture.status.short === 'LIVE';
         return `
-            <div class="bg-white rounded-lg shadow-md p-4 border-l-4 border-green-500 card-hover">
-                <div class="flex items-center justify-between mb-4 border-b pb-2">
-                    <span class="${isLive ? 'bg-red-100 text-red-800 animate-pulse' : 'bg-gray-100 text-gray-600'} px-2 py-1 rounded text-xs font-bold uppercase">${isLive ? 'AO VIVO' : 'Grade'}</span>
-                    <span class="text-xs text-blue-600 font-bold truncate">MagiaTV Ao Vivo</span>
+            <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500 card-hover text-center">
+                <div class="mb-2"><span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-1 rounded uppercase">${match.league.name}</span></div>
+                <div class="flex items-center justify-between gap-4 mb-4">
+                    <div class="flex-1"><p class="font-bold text-sm">${match.teams.home.name}</p></div>
+                    <div class="text-gray-400 font-black italic">VS</div>
+                    <div class="flex-1"><p class="font-bold text-sm">${match.teams.away.name}</p></div>
                 </div>
-                <div class="flex items-center justify-between px-2">
-                    <div class="flex flex-col items-center w-[45%]"><p class="text-sm font-bold text-center">${match.time1}</p></div>
-                    <div class="text-lg font-black text-gray-300">VS</div>
-                    <div class="flex flex-col items-center w-[45%]"><p class="text-sm font-bold text-center">${match.time2}</p></div>
-                </div>
-                <div class="mt-3 pt-2 border-t flex flex-wrap justify-center gap-3">${channelsHtml}</div>
-                <button class="w-full mt-4 bg-green-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition" onclick="openWhatsAppGame('${match.time1}', '${match.time2}')">Assistir Agora</button>
+                <button class="w-full bg-green-600 text-white py-2 rounded-lg text-sm font-bold" onclick="window.open('${API_CONFIG.wysterExternal}', '_blank')">Ver Canais no Painel</button>
             </div>`;
     }).join('');
 }
 
-// ==========================================
-// 3. UTILITÁRIOS E BOTÕES (RESTAURADOS)
-// ==========================================
+// 3. UTILITÁRIOS RESTAURADOS
 function renderMovies() {
     const container = document.getElementById('movies-container');
     if(!container) return;
@@ -98,8 +64,7 @@ function renderMovies() {
 function openTrailer(id) { document.getElementById('youtube-player').src = `https://www.youtube.com/embed/${id}?autoplay=1`; document.getElementById('video-modal').classList.remove('hidden'); }
 function closeVideoModal() { document.getElementById('youtube-player').src = ''; document.getElementById('video-modal').classList.add('hidden'); }
 function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Olá!`, '_blank'); }
-function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assistir ${h} x ${a} na MagiaTV!`)}`, '_blank'); }
 function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis na MagiaTV!`, '_blank'); }
-function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assinar o ${p} de ${v}`)}`, '_blank'); }
+function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero o plano ${p} de ${v}`)}`, '_blank'); }
 
 document.addEventListener('DOMContentLoaded', () => { getMatches(); renderMovies(); if(document.getElementById('menu-btn')) document.getElementById('menu-btn').onclick = () => document.getElementById('mobile-menu').classList.toggle('hidden'); });
