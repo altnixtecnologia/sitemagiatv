@@ -10,25 +10,32 @@ API_CONFIG = {
     'URL': 'https://v3.football.api-sports.io/fixtures'
 }
 
+# IDs das Ligas Principais (Brasil e Top Europa)
+TOP_LEAGUES = [71, 39, 140, 135, 78, 2, 3, 13, 848]
+
 @app.route('/api/matches', methods=['GET'])
-def get_live_matches():
+def get_featured_matches():
     try:
-        # Busca especificamente jogos que estão acontecendo AGORA (live=all)
+        # Busca os próximos 50 jogos agendados na API
         response = requests.get(
             API_CONFIG['URL'], 
-            params={'live': 'all'}, 
+            params={'next': 50, 'timezone': 'America/Sao_Paulo'}, 
             headers={'x-apisports-key': API_CONFIG['KEY']},
             timeout=10
         )
         
         if response.status_code == 200:
-            data = response.json()
-            # Pega os primeiros 12 jogos ao vivo encontrados
-            return jsonify({"response": data.get('response', [])[:12]})
-        else:
-            return jsonify({"response": []})
+            all_matches = response.json().get('response', [])
             
-    except Exception:
+            # Separa os jogos das ligas principais (Série A e Europa)
+            featured = [m for m in all_matches if m['league']['id'] in TOP_LEAGUES]
+            
+            # Se não houver jogos nas ligas principais, envia os próximos 10 gerais
+            result = featured[:15] if featured else all_matches[:10]
+            
+            return jsonify({"response": result})
+        return jsonify({"response": []})
+    except:
         return jsonify({"response": []})
 
 if __name__ == '__main__':
