@@ -13,7 +13,6 @@ const API_CONFIG = {
     whatsappNumber: '5548991004780'
 };
 
-// 3. LÓGICA PRINCIPAL
 async function getMatches() {
     const updateIndicator = document.getElementById('update-indicator');
     const mainContainer = document.getElementById('main-matches');
@@ -89,12 +88,11 @@ function renderMatches(matches, container) {
                     <div class="text-lg font-black">${m.goals.home ?? 0} x ${m.goals.away ?? 0}</div>
                     <div class="flex flex-col items-center w-[35%]"><img src="${m.teams.away.logo}" class="w-10 h-10 object-contain"><p class="text-xs font-bold text-center mt-2">${m.teams.away.name}</p></div>
                 </div>
-                <button onclick="openWhatsAppGame('${m.teams.home.name}', '${m.teams.away.name}')" class="w-full mt-4 bg-green-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition">Assistir Agora</button>
+                <button onclick="openWhatsAppGame('${m.teams.home.name}', '${m.teams.away.name}')" class="w-full mt-4 bg-green-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition shadow-md">Assistir Agora</button>
             </div>`;
     }).join('');
 }
 
-// 4. AUXILIARES
 function translateStatus(s) { 
     const m = {'TBD':'A Definir','NS':'Agendado','1H':'1º Tempo','HT':'Intervalo','2H':'2º Tempo','FT':'Fim','LIVE':'Ao Vivo'}; 
     return m[s] || s; 
@@ -104,10 +102,10 @@ function renderMovies() {
     const c = document.getElementById('movies-container');
     if(!c) return;
     c.innerHTML = MOVIE_HIGHLIGHTS.map(m => `
-        <div class="bg-white rounded-lg shadow-md overflow-hidden group">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden group cursor-pointer" onclick="openTrailer('${m.trailerId}')">
             <div class="relative aspect-[2/3] overflow-hidden">
                 <img src="${m.image}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
-                <button onclick="openTrailer('${m.trailerId}')" class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300"><i class="fas fa-play text-white text-3xl"></i></button>
+                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300"><i class="fas fa-play text-white text-3xl"></i></div>
             </div>
             <div class="p-4"><h5 class="font-bold text-gray-800 text-sm">${m.title}</h5></div>
         </div>`).join('');
@@ -117,13 +115,8 @@ function openTrailer(id) { document.getElementById('youtube-player').src = `http
 function closeVideoModal() { document.getElementById('youtube-player').src = ''; document.getElementById('video-modal').classList.add('hidden'); }
 function toggleOtherGames() { document.getElementById('other-matches').classList.toggle('hidden'); }
 function openWhatsAppGeneral() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Olá!`, '_blank'); }
-function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero assistir ${h} x ${a}`, '_blank'); }
-function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis`, '_blank'); }
-function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero assinar o ${p}`, '_blank'); }
+function openWhatsAppGame(h, a) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assistir ao jogo ${h} x ${a} na MagiaTV!`)}`, '_blank'); }
+function requestTest() { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=Quero um teste grátis na MagiaTV!`, '_blank'); }
+function buyPlan(p, v) { window.open(`https://wa.me/${API_CONFIG.whatsappNumber}?text=${encodeURIComponent(`Quero assinar o ${p} de ${v}.`)}`, '_blank'); }
 
-document.addEventListener('DOMContentLoaded', () => { 
-    getMatches(); 
-    renderMovies(); 
-    const b = document.getElementById('menu-btn');
-    if(b) b.onclick = () => document.getElementById('mobile-menu').classList.toggle('hidden');
-});
+document.addEventListener('DOMContentLoaded', () => { getMatches(); renderMovies(); });
