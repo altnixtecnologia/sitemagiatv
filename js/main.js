@@ -8,7 +8,20 @@ const MOVIE_HIGHLIGHTS = [
 
 const WHATS_NUMBER = '5548991004780';
 
-// Renderiza Filmes
+// --- Lógica da Janela Flutuante Camuflada ---
+function openWysterModal() {
+    document.getElementById('wyster-modal').classList.remove('hidden');
+    // Trava a rolagem da página principal atrás do modal
+    document.body.style.overflow = 'hidden';
+}
+
+function closeWysterModal() {
+    document.getElementById('wyster-modal').classList.add('hidden');
+    // Destrava a rolagem
+    document.body.style.overflow = 'auto';
+}
+
+// --- Renderização de Filmes ---
 function renderMovies() {
     const container = document.getElementById('movies-container');
     if(!container) return;
@@ -16,15 +29,13 @@ function renderMovies() {
         <div class="bg-white rounded-lg shadow-md overflow-hidden group card-hover">
             <div class="relative aspect-[2/3] overflow-hidden">
                 <img src="${m.image}" class="w-full h-full object-cover">
-                <button onclick="openTrailer('${m.trailerId}')" class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
-                    <i class="fas fa-play text-white text-3xl"></i>
-                </button>
+                <button onclick="openTrailer('${m.trailerId}')" class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fas fa-play text-white text-3xl"></i></button>
             </div>
             <div class="p-3 text-center text-xs font-bold text-gray-700">${m.title}</div>
         </div>`).join('');
 }
 
-// Funções de Modal e WhatsApp
+// --- Funções de Modal de Vídeo e WhatsApp ---
 function openTrailer(id) { 
     document.getElementById('youtube-player').src = `https://www.youtube.com/embed/${id}?autoplay=1`; 
     document.getElementById('video-modal').classList.remove('hidden'); 
@@ -37,10 +48,6 @@ function closeVideoModal() {
 
 function requestTest() { 
     window.open(`https://wa.me/${WHATS_NUMBER}?text=Quero um teste grátis na MagiaTV!`, '_blank'); 
-}
-
-function openWhatsAppGeneral() { 
-    window.open(`https://wa.me/${WHATS_NUMBER}?text=Olá! Vim pelo site e gostaria de tirar uma dúvida.`, '_blank'); 
 }
 
 document.addEventListener('DOMContentLoaded', renderMovies);
