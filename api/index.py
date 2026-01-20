@@ -17,30 +17,35 @@ API_CONFIG = {
 def get_unified_matches():
     session = requests.Session()
     
-    # Camuflagem de iPhone (Geralmente evita erro 403 em firewalls)
+    # Camuflagem de Navegador Real (Chrome no Windows)
     headers = {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-        'Accept': '*/*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        'X-Requested-With': 'XMLHttpRequest',
         'Origin': 'https://wysterjogos.nptv2.com',
-        'Referer': 'https://wysterjogos.nptv2.com/'
+        'Referer': 'https://wysterjogos.nptv2.com/',
+        'Connection': 'keep-alive'
     }
 
-    # 1. BUSCA NA WYSTER
     wyster_data = []
+    status_debug = "Iniciando..."
+    
     try:
-        # Tenta pegar os dados direto
+        # Tenta a conexão com a Wyster
         res_w = session.post(
             API_CONFIG['WYSTER_URL'], 
             data={'token': API_CONFIG['WYSTER_TOKEN']}, 
             headers=headers,
-            timeout=10
+            timeout=12
         )
+        status_debug = f"Status: {res_w.status_code}"
         if res_w.status_code == 200:
             wyster_data = res_w.json()
-    except:
-        pass
+    except Exception as e:
+        status_debug = "Erro de Conexão"
 
-    # 2. BUSCA NA API-SPORTS (LOGOS)
+    # Busca logos na API-Sports
     today = (datetime.utcnow() - timedelta(hours=3)).strftime('%Y-%m-%d')
     sports_data = []
     try:
@@ -54,20 +59,20 @@ def get_unified_matches():
     except:
         pass
 
-    # 3. UNIFICAÇÃO
     final_list = []
-    for w_game in wyster_data:
-        home_w = w_game.get('time1', '').lower().strip()
+    for w in wyster_data:
+        home_w = w.get('time1', '').lower().strip()
         game_obj = {
             "teams": {
-                "home": {"name": w_game.get('time1'), "logo": "https://media.api-sports.io/football/teams/default.png"},
-                "away": {"name": w_game.get('time2'), "logo": "https://media.api-sports.io/football/teams/default.png"}
+                "home": {"name": w.get('time1'), "logo": "https://media.api-sports.io/football/teams/default.png"},
+                "away": {"name": w.get('time2'), "logo": "https://media.api-sports.io/football/teams/default.png"}
             },
             "league": {"name": "MagiaTV Ao Vivo"},
-            "fixture": {"status": {"short": "LIVE" if "AO VIVO" in w_game.get('status', '') else "NS"}},
+            "fixture": {"status": {"short": "LIVE" if "AO VIVO" in w.get('status', '') else "NS"}},
             "goals": {"home": 0, "away": 0},
-            "canais": w_game.get('canais', [])
+            "canais": w.get('canais', [])
         }
+        # Puxa logos oficiais se encontrar
         for s in sports_data:
             if home_w[:5] in s['teams']['home']['name'].lower():
                 game_obj["teams"]["home"]["logo"] = s['teams']['home']['logo']
@@ -75,12 +80,11 @@ def get_unified_matches():
                 break
         final_list.append(game_obj)
 
-    # CARD DE SEGURANÇA (Corrigido sem o link quebrado do placeholder)
+    # Se a lista estiver vazia (Bloqueio 403), mostra o erro para sabermos
     if not final_list:
         final_list.append({
-            "teams": {"home": {"name": "Grade MagiaTV", "logo": "https://media.api-sports.io/football/teams/default.png"}, 
-                     "away": {"name": "Sincronizando", "logo": "https://media.api-sports.io/football/teams/default.png"}},
-            "league": {"name": "Atualizando Canais"},
+            "teams": {"home": {"name": "Grade MagiaTV", "logo": ""}, "away": {"name": status_debug, "logo": ""}},
+            "league": {"name": "Sincronizando"},
             "fixture": {"status": {"short": "NS"}},
             "goals": {"home": 0, "away": 0},
             "canais": [{"nome": "Suporte", "img_url": "https://media.api-sports.io/football/teams/default.png"}]
