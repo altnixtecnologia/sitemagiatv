@@ -15,25 +15,23 @@ API_CONFIG = {
 
 @app.route('/api/matches', methods=['GET'])
 def get_unified_matches():
+    # 1. PREPARAÇÃO DA SESSÃO (CAMUFLAGEM)
     session = requests.Session()
-    
-    # Cabeçalhos de "Nível de Navegador Real" para quebrar o 403
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'application/json, text/javascript, */*; q=0.01',
-        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'X-Requested-With': 'XMLHttpRequest',
-        'Origin': 'https://wysterjogos.nptv2.com',
         'Referer': 'https://wysterjogos.nptv2.com/',
-        'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"'
+        'Origin': 'https://wysterjogos.nptv2.com'
     }
 
-    # 1. BUSCA NA WYSTER (TENTA QUEBRAR O BLOQUEIO)
+    # 2. BUSCA NA WYSTER (DUAS ETAPAS PARA QUEBRAR O 403)
     wyster_data = []
     try:
+        # Etapa A: "Visita" a página para pegar cookies
+        session.get('https://wysterjogos.nptv2.com/', headers=headers, timeout=5)
+        
+        # Etapa B: Pede os dados com os cookies ativos
         res_w = session.post(
             API_CONFIG['WYSTER_URL'], 
             data={'token': API_CONFIG['WYSTER_TOKEN']}, 
@@ -45,7 +43,7 @@ def get_unified_matches():
     except:
         pass
 
-    # 2. BUSCA NA API-SPORTS (PARA LOGOS)
+    # 3. BUSCA NA API-SPORTS (PARA LOGOS E PLACARES)
     today = (datetime.utcnow() - timedelta(hours=3)).strftime('%Y-%m-%d')
     sports_data = []
     try:
@@ -59,7 +57,7 @@ def get_unified_matches():
     except:
         pass
 
-    # 3. UNIFICAÇÃO
+    # 4. UNIFICAÇÃO
     final_list = []
     for w_game in wyster_data:
         home_w = w_game.get('time1', '').lower().strip()
@@ -73,6 +71,7 @@ def get_unified_matches():
             "goals": {"home": 0, "away": 0},
             "canais": w_game.get('canais', [])
         }
+        # Tenta achar o logo oficial
         for s in sports_data:
             if home_w[:5] in s['teams']['home']['name'].lower():
                 game_obj["teams"]["home"]["logo"] = s['teams']['home']['logo']
@@ -80,14 +79,14 @@ def get_unified_matches():
                 break
         final_list.append(game_obj)
 
-    # Se ainda estiver bloqueado, mantém o card de teste para o site não quebrar
+    # CARD DE SEGURANÇA (Só aparece se a Wyster falhar)
     if not final_list:
         final_list.append({
             "teams": {"home": {"name": "Sincronizando Canais", "logo": ""}, "away": {"name": "MagiaTV", "logo": ""}},
             "league": {"name": "Grade em Atualização"},
             "fixture": {"status": {"short": "NS"}},
             "goals": {"home": 0, "away": 0},
-            "canais": [{"nome": "Suporte", "img_url": "https://cdn-icons-png.flaticon.com/512/124/124034.png"}]
+            "canais": [{"nome": "Suporte MagiaTV", "img_url": "https://cdn-icons-png.flaticon.com/512/124/124034.png"}]
         })
 
     return jsonify({"response": final_list})
