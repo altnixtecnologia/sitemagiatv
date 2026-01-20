@@ -16,43 +16,43 @@ API_CONFIG = {
 @app.route('/api/matches', methods=['GET'])
 def get_unified_matches():
     session = requests.Session()
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+    }
 
     final_list = []
     
     try:
-        # 1. TENTA CAPTURAR O HTML COMPLETO
+        # Acessa a página pública para ler os nomes dos jogos
         res = session.get(API_CONFIG['WYSTER_PAGE'], headers=headers, timeout=10)
         if res.status_code == 200:
             soup = BeautifulSoup(res.text, 'html.parser')
-            
-            # 2. BUSCA AVANÇADA POR PADRÃO "TIME X TIME"
-            # Procura em todo o texto do site por padrões como "Flamingo x Vasco"
             text_content = soup.get_text(" ", strip=True)
+            
+            # Regex que busca padrões de nomes com "x" no meio
             matches = re.findall(r'([A-Z][a-zA-ZÀ-ÿ\s\.\-]{2,20})\s+[xX]\s+([A-Z][a-zA-ZÀ-ÿ\s\.\-]{2,20})', text_content)
             
             for m in matches:
                 home, away = m[0].strip(), m[1].strip()
-                # Filtra termos que não são times
                 if "Grade" not in home and "Agenda" not in home:
                     final_list.append({
                         "teams": {
                             "home": {"name": home, "logo": "https://media.api-sports.io/football/teams/default.png"},
                             "away": {"name": away, "logo": "https://media.api-sports.io/football/teams/default.png"}
                         },
-                        "league": {"name": "Transmissão MagiaTV"},
+                        "league": {"name": "MagiaTV Ao Vivo"},
                         "fixture": {"status": {"short": "LIVE"}},
                         "goals": {"home": 0, "away": 0},
-                        "canais": [{"nome": "HD/4K", "img_url": "https://cdn-icons-png.flaticon.com/512/124/124034.png"}]
+                        "canais": [{"nome": "HD", "img_url": "https://cdn-icons-png.flaticon.com/512/124/124034.png"}]
                     })
     except:
         pass
 
-    # 3. FALLBACK CASO A RASPAGEM AINDA SEJA BLOQUEADA
+    # Se a raspagem falhar, mantém o botão de emergência para o painel
     if not final_list:
         final_list.append({
-            "teams": {"home": {"name": "Grade ao Vivo", "logo": ""}, "away": {"name": "Disponível", "logo": ""}},
-            "league": {"name": "Link Direto Ativo"},
+            "teams": {"home": {"name": "Grade de Jogos", "logo": ""}, "away": {"name": "MagiaTV", "logo": ""}},
+            "league": {"name": "Link Externo Disponível"},
             "fixture": {"status": {"short": "NS"}},
             "goals": {"home": 0, "away": 0},
             "canais": []
