@@ -1,10 +1,10 @@
 const WHATS_NUMBER = '5548991004780';
 
 const MOVIE_HIGHLIGHTS = [
-    { "title": "Plano em Família 2", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/aLgvLNWETZ2wtPzU3E7lavEpCJw.jpg", "trailerId": "64-0cFnQ6Ls" },
-    { "title": "Zootopia 2", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/fthvYnjERbXt3ILjLjHpPNd5IVJ.jpg", "trailerId": "z-C1VtXQr6o" },
-    { "title": "IT: Derry (2025)", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/gMTfrLvrDaD0zrhpLZ7zXIIpKfJ.jpg", "trailerId": "_t4_QgZoyn8" },
-    { "title": "Frankenstein", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/cXsMxClCcAF1oMwoXZvbKwWoNeS.jpg", "trailerId": "gRvl9uxmcbA" }
+    { "title": "Stranger Things (2016)", "category": "Sci-Fi & Fantasy, Mistério e Action & Adventure", "image": "https://media.themoviedb.org/t/p/w300_and_h450_face/twfKp60THrcOIep9sjHODOOfO8d.jpg", "trailerId": "fLL0_Vy2Wlo"  },
+    { "title": "A Única Saída", "category": "Comédia", "image": "https://media.filmelier.com//images/tit/113197/poster/eojjeolsuga-eobsda42541.webp", "trailerId": "vi9DAcAbejA" },
+    { "title": "Anaconda", "category": "Ação", "image": "https://media.filmelier.com//images/tit/28934/poster/anaconda14524.webp", "trailerId": "US_KXy4EZQ8" },
+    { "title": "Marty Supreme", "category": "Drama", "image": "https://media.filmelier.com//images/tit/113411/poster/marty-supreme32420.webp", "trailerId": "SovoTyFeF-I" }
 ];
 
 function renderMovies() {
